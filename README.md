@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DisMe
 
-## Getting Started
+Rede social feita para a cultura de usuários do Discord: descoberta de pessoas, match,
+crush, Flex (status), presentes virtuais, coleções, relacionamentos e casais.
 
-First, run the development server:
+Esta fase é **front-end com dados mockados** — sem backend, pagamentos ou OAuth reais,
+mas estruturada para essas integrações depois.
+
+## Stack
+
+- **Next.js 16** (App Router, Turbopack) + **React 19**
+- **TypeScript**
+- **Tailwind CSS v4** — design tokens em `src/app/globals.css` (`@theme`)
+- **motion** (Framer Motion) — usado com parcimônia
+- **lucide-react** — ícones
+
+## Rodando
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre em `http://localhost:3000` e redireciona para `/home` (produto logado).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # build de produção
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estrutura
 
-## Learn More
+```
+src/
+  app/
+    (app)/            # experiência logada (com sidebar + bottom nav)
+      home, discover, matches, messages, flex, gifts,
+      rankings, couples, couple, collection, profile, notifications, settings
+    login, onboarding # fora do shell
+  components/         # brand, ui, nav, layout, feed, discover, gifts,
+                      # flex, ranking, messages, couple, profile, settings, onboarding, icons
+  data/               # mocks: usuários, jogos, presentes, feed, ranking, casais, coleções
+  lib/                # utils, labels, navegação
+  types/              # modelo de domínio
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Design
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Dark-first (grafite), tipografia forte (Plus Jakarta Sans), roxo da marca usado com
+intenção. Sem glow, gradiente decorativo, glass ou emoji na interface. Presentes são
+ilustrações SVG próprias. Mobile é prioridade (bottom nav dedicado, não desktop reduzido).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Próximas integrações (planejadas)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Autenticação com Discord (OAuth) + e-mail
+- Supabase (dados, auth, storage) — avatares hoje via `i.pravatar.cc` (placeholder)
+- Pagamentos (créditos e presentes)
+- Realtime no chat e nas batalhas de Flex
+- Animações específicas por presente no recebimento
