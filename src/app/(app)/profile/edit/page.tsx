@@ -1,11 +1,14 @@
-import { SectionStub } from "@/components/layout/SectionStub";
+import { currentUser } from "@/data";
+import { PageContainer } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ProfileEditForm } from "@/components/profile/ProfileEditForm";
 
 export default function ProfileEditPage() {
+  const me = currentUser();
   return (
-    <SectionStub
-      title="Editar perfil"
-      line="Foto, banner, bio, jogos, interesses e conexões — a edição completa chega em breve."
-      cta={{ label: "Voltar ao Início", href: "/home" }}
-    />
+    <PageContainer>
+      <PageHeader title="Editar perfil" />
+      <ProfileEditForm user={me} />
+    </PageContainer>
   );
 }

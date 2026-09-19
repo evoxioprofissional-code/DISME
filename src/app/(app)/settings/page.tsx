@@ -1,12 +1,12 @@
-import { SectionStub } from "@/components/layout/SectionStub";
+import { PageContainer } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Settings } from "@/components/settings/Settings";
 
 export default function SettingsPage() {
   return (
-    <SectionStub
-      title="Configurações"
-      subtitle="Conta e privacidade"
-      line="Controle de mensagens, privacidade, conexões e preferências chegam em breve."
-      cta={{ label: "Voltar ao Início", href: "/home" }}
-    />
+    <PageContainer>
+      <PageHeader title="Configurações" />
+      <Settings />
+    </PageContainer>
   );
 }
