@@ -7,3 +7,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# DisMe
+
+- Antes de alterar código, leia `HANDOFF_CODEX.md` por completo.
+- Stack principal: Next.js 16, React 19, TypeScript, Tailwind CSS v4 e Supabase.
+- Preserve a identidade visual e as restrições de design descritas no handoff.
+- Nunca leia segredos em voz alta, publique credenciais ou versione `.env.local`.
+- Use somente a API oficial do Discord, salvo nova decisão explícita do dono.
+- Antes de entregar mudanças, rode `npx tsc --noEmit`, `npm run lint` e
+  `npm run build`. Informe separadamente avisos preexistentes.
+- Verifique `git status` para não sobrescrever alterações de outro agente.

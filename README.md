@@ -24,8 +24,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Preencha as variáveis públicas do Supabase em `.env.local`. O app abre em
-`http://localhost:3000`, exige login e conduz novos usuários ao onboarding.
+Preencha as variáveis de `.env.example` em `.env.local`. O app abre em
+`http://localhost:3000`; visitantes podem navegar, e ações pessoais pedem login.
+Novos usuários autenticados são conduzidos ao onboarding.
 
 ```bash
 npm run build   # build de produção
@@ -65,8 +66,12 @@ ilustrações SVG próprias. Mobile é prioridade (bottom nav dedicado, não des
 
 ## Próximas integrações
 
-- Configurar credenciais do Discord no painel do Supabase (o botão já está pronto)
-- Supabase Storage para upload real de avatar e banner
 - Pagamentos (créditos e presentes)
 - Realtime no chat e nas batalhas de Flex
 - Animações específicas por presente no recebimento
+- Persistência dos controles de privacidade e notificações
+
+## Novo computador
+
+Consulte [SETUP_NOTEBOOK.md](SETUP_NOTEBOOK.md) para instalar Codex/Claude Code,
+clonar o projeto, recuperar as variáveis pela Vercel e validar o ambiente.
