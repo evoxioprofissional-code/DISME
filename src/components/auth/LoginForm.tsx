@@ -53,7 +53,10 @@ export function LoginForm() {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "discord",
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+        scopes: "identify email",
+      },
     });
     if (error) setError("Login com Discord ainda não está ativo.");
   }

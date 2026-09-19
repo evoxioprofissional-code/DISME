@@ -6,5 +6,5 @@ export default async function OnboardingPage() {
   const profile = await getMyProfile();
   if (!profile) redirect("/login");
   if (profile.onboarded) redirect("/home");
-  return <Onboarding />;
+  return <Onboarding profile={profile} />;
 }

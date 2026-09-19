@@ -56,7 +56,10 @@ function LoginPrompt({ onClose }: { onClose: () => void }) {
   async function onDiscord() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "discord",
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+        scopes: "identify email",
+      },
     });
     if (error) router.push("/login");
   }

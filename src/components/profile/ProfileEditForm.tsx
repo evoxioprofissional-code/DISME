@@ -8,10 +8,10 @@ import type { Intent, User } from "@/types";
 import { games as allGames } from "@/data";
 import { intentMeta, connectionMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
-import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { updateProfile } from "@/lib/actions";
 
 const INTEREST_POOL = [
@@ -52,6 +52,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function ProfileEditForm({ user }: { user: User }) {
+  const [avatar, setAvatar] = useState(user.avatar);
   const [displayName, setDisplayName] = useState(user.displayName);
   const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio);
@@ -89,13 +90,9 @@ export function ProfileEditForm({ user }: { user: User }) {
         </div>
         <div className="px-5 pb-5">
           <div className="-mt-10 mb-1">
-            <button className="relative inline-block" aria-label="Trocar foto">
-              <Avatar src={user.avatar} name={user.displayName} size="2xl" rounded="xl" className="rounded-2xl ring-4 ring-surface" />
-              <span className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-brand text-on-brand ring-2 ring-surface">
-                <Camera className="size-4" />
-              </span>
-            </button>
+            <AvatarUploader value={avatar} name={displayName} onUploaded={setAvatar} />
           </div>
+          <p className="mt-3 text-xs text-muted">Clique na foto para trocar. JPG, PNG, WebP ou GIF de até 4 MB.</p>
         </div>
       </div>
 

@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, Camera, Check } from "lucide-react";
-import type { Intent } from "@/types";
+import { ChevronLeft, Check } from "lucide-react";
+import type { Intent, User } from "@/types";
 import { games as allGames } from "@/data";
 import { intentMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { completeOnboarding } from "@/lib/actions";
 
 const INTERESTS = [
@@ -30,23 +31,27 @@ interface Data {
   games: string[];
   showProfile: boolean;
   notifications: boolean;
+  avatar: string;
 }
 
-const initial: Data = {
-  displayName: "",
-  username: "",
-  age: "",
-  intent: null,
-  interests: [],
-  games: [],
-  showProfile: true,
-  notifications: true,
-};
+function initialData(profile: User): Data {
+  return {
+    displayName: profile.displayName,
+    username: profile.username,
+    age: "",
+    intent: null,
+    interests: [],
+    games: [],
+    showProfile: true,
+    notifications: true,
+    avatar: profile.avatar,
+  };
+}
 
-export function Onboarding() {
+export function Onboarding({ profile }: { profile: User }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [d, setD] = useState<Data>(initial);
+  const [d, setD] = useState<Data>(() => initialData(profile));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const ageNum = parseInt(d.age, 10);
@@ -149,7 +154,7 @@ export function Onboarding() {
             )}
 
             {current.key === "identity" && (
-              <Step title="Como te chamam?" subtitle="Seu nome e @ no DisMe.">
+              <Step title="Como te chamam?" subtitle="Trouxemos sua identidade do Discord. Você pode ajustar se quiser.">
                 <Field label="Nome de exibição">
                   <input
                     value={d.displayName}
@@ -243,13 +248,18 @@ export function Onboarding() {
             )}
 
             {current.key === "photos" && (
-              <Step title="Adicione uma foto" subtitle="Perfis com foto recebem mais matches.">
+              <Step
+                title={d.avatar ? "Sua foto está pronta" : "Adicione uma foto"}
+                subtitle={d.avatar ? "Usamos seu avatar do Discord. Você pode trocar agora ou depois." : "Perfis com foto recebem mais matches."}
+              >
                 <div className="flex flex-col items-center gap-4 py-4">
-                  <button className="flex size-32 flex-col items-center justify-center gap-2 rounded-full border-2 border-dashed border-border-strong text-muted transition-colors hover:border-brand hover:text-brand">
-                    <Camera className="size-7" />
-                    <span className="text-xs font-semibold">Adicionar</span>
-                  </button>
-                  <p className="text-center text-xs text-muted">Você pode adicionar mais fotos depois.</p>
+                  <AvatarUploader
+                    value={d.avatar}
+                    name={d.displayName}
+                    prominent
+                    onUploaded={(avatar) => setD((currentData) => ({ ...currentData, avatar }))}
+                  />
+                  <p className="text-center text-xs text-muted">JPG, PNG, WebP ou GIF de até 4 MB.</p>
                 </div>
               </Step>
             )}
