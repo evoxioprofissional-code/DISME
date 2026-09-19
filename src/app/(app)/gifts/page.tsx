@@ -1,12 +1,17 @@
-import { SectionStub } from "@/components/layout/SectionStub";
+import { PageContainer } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { GiftStore } from "@/components/gifts/GiftStore";
 
-export default function GiftsPage() {
+export default async function GiftsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ to?: string }>;
+}) {
+  const { to } = await searchParams;
   return (
-    <SectionStub
-      title="Presentes"
-      subtitle="Envie algo memorável"
-      line="A loja de presentes, com raridades e itens limitados, está a caminho."
-      cta={{ label: "Voltar ao Início", href: "/home" }}
-    />
+    <PageContainer className="max-w-4xl">
+      <PageHeader title="Presentes" subtitle="Envie algo que a pessoa vai guardar" />
+      <GiftStore presetUsername={to} />
+    </PageContainer>
   );
 }

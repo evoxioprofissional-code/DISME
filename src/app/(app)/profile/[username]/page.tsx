@@ -174,7 +174,7 @@ export default async function ProfilePage({
           <Section
             title={`Coleção · ${user.stats.collectionCount}`}
             action="Ver tudo"
-            href={`/profile/${user.username}`}
+            href={`/collection/${user.username}`}
           >
             <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6">
               {collection.map((og) => {
