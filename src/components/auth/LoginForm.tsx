@@ -62,7 +62,7 @@ export function LoginForm() {
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <Wordmark priority className="!h-9" />
+          <Wordmark priority className="-my-5 !h-20" />
           <h1 className="mt-8 text-2xl font-extrabold leading-tight tracking-tight">
             {mode === "signin" ? "Entrar no DisMe" : "Criar sua conta"}
           </h1>
