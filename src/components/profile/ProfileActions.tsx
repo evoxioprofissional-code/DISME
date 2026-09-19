@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Gift,
   MessageCircle,
@@ -18,6 +19,7 @@ import { AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { RelationshipModal } from "@/components/relationship/RelationshipModal";
 import { requestRelationship } from "@/lib/actions";
+import { useAuthGate } from "@/components/auth/AuthProvider";
 
 export function ProfileActions({
   isSelf,
@@ -32,6 +34,8 @@ export function ProfileActions({
   displayName: string;
   canRelationship: boolean;
 }) {
+  const router = useRouter();
+  const { requireAuth } = useAuthGate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [relRequested, setRelRequested] = useState(false);
   const [relModal, setRelModal] = useState(false);
@@ -68,23 +72,25 @@ export function ProfileActions({
   return (
     <>
     <div className="flex items-center gap-2">
-      <Link
-        href={`/gifts?to=${username}`}
+      <button
+        onClick={() => requireAuth(() => router.push(`/gifts?to=${username}`))}
         className="flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
       >
         <Gift className="size-4" />
         Presentear
-      </Link>
-      <Link
-        href="/messages"
+      </button>
+      <button
+        onClick={() => requireAuth(() => router.push("/messages"))}
         aria-label="Mensagem"
         className="flex size-11 items-center justify-center rounded-full bg-surface-3 text-text transition-colors hover:bg-hover"
       >
         <MessageCircle className="size-5" />
-      </Link>
+      </button>
       {canRelationship && (
         <button
-          onClick={() => (relRequested ? setRelRequested(false) : setRelModal(true))}
+          onClick={() =>
+            requireAuth(() => (relRequested ? setRelRequested(false) : setRelModal(true)))
+          }
           aria-pressed={relRequested}
           className={cn(
             "flex size-11 items-center justify-center rounded-full transition-colors",

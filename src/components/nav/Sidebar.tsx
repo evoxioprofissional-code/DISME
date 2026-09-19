@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, Bell } from "lucide-react";
+import { Settings, Bell, LogIn } from "lucide-react";
 import { cn, formatCompact } from "@/lib/utils";
 import { primaryNav, type NavUser, type NavBadges } from "@/lib/nav";
 import { Wordmark } from "@/components/brand/Wordmark";
@@ -12,7 +12,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function Sidebar({ me, badges }: { me: NavUser; badges: NavBadges }) {
+export function Sidebar({ me, badges }: { me: NavUser | null; badges: NavBadges }) {
   const pathname = usePathname();
 
   return (
@@ -83,20 +83,30 @@ export function Sidebar({ me, badges }: { me: NavUser; badges: NavBadges }) {
           Configurações
         </Link>
 
-        <Link
-          href={`/profile/${me.username}`}
-          className="mt-1 flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-surface-2"
-        >
-          <Avatar src={me.avatar} name={me.displayName} size="md" presence={me.presence} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-bold text-text">{me.displayName}</span>
-            <span className="block truncate text-xs text-muted">@{me.username}</span>
-          </span>
-          <span className="flex flex-col items-end">
-            <span className="tnum text-sm font-bold text-brand">{formatCompact(me.flex)}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Flex</span>
-          </span>
-        </Link>
+        {me ? (
+          <Link
+            href={`/profile/${me.username}`}
+            className="mt-1 flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-surface-2"
+          >
+            <Avatar src={me.avatar} name={me.displayName} size="md" presence={me.presence} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-text">{me.displayName}</span>
+              <span className="block truncate text-xs text-muted">@{me.username}</span>
+            </span>
+            <span className="flex flex-col items-end">
+              <span className="tnum text-sm font-bold text-brand">{formatCompact(me.flex)}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Flex</span>
+            </span>
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="mt-1 flex h-11 items-center justify-center gap-2 rounded-full bg-brand text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
+          >
+            <LogIn className="size-4" />
+            Entrar
+          </Link>
+        )}
       </div>
     </aside>
   );

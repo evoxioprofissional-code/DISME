@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/nav/Sidebar";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { TopBar } from "@/components/nav/TopBar";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import type { NavUser, NavBadges } from "@/lib/nav";
 
 export function AppShell({
@@ -9,20 +10,22 @@ export function AppShell({
   badges,
 }: {
   children: React.ReactNode;
-  me: NavUser;
+  me: NavUser | null;
   badges: NavBadges;
 }) {
   return (
-    <div className="flex min-h-dvh bg-bg">
-      <Sidebar me={me} badges={badges} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar me={me} badges={badges} />
-        <main className="flex-1 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
-          {children}
-        </main>
+    <AuthProvider isAuthed={!!me}>
+      <div className="flex min-h-dvh bg-bg">
+        <Sidebar me={me} badges={badges} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar me={me} badges={badges} />
+          <main className="flex-1 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
+            {children}
+          </main>
+        </div>
+        <BottomNav me={me} badges={badges} />
       </div>
-      <BottomNav me={me} badges={badges} />
-    </div>
+    </AuthProvider>
   );
 }
 

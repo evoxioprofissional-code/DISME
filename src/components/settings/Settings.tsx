@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   User as UserIcon,
@@ -12,12 +12,17 @@ import {
   LogOut,
   ChevronRight,
   EyeOff,
+  Check,
+  X,
 } from "lucide-react";
 import { connectionMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
+import { signOut, upsertConnection, removeConnection } from "@/lib/actions";
+
+type Platform = "steam" | "spotify" | "riot" | "twitch";
 
 function Group({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -36,19 +41,17 @@ function Row({
   hint,
   right,
   href,
-  danger,
 }: {
   label: string;
   hint?: string;
   right?: React.ReactNode;
   href?: string;
-  danger?: boolean;
 }) {
   const content = (
     <div className="flex items-center gap-3 px-4 py-3.5">
       <div className="min-w-0 flex-1">
-        <p className={cn("text-sm font-semibold", danger ? "text-danger" : "text-text")}>{label}</p>
-        {hint && <p className="text-xs text-muted">{hint}</p>}
+        <p className="text-sm font-semibold text-text">{label}</p>
+        {hint && <p className="truncate text-xs text-muted">{hint}</p>}
       </div>
       {right}
     </div>
@@ -63,7 +66,108 @@ function Row({
   return content;
 }
 
-export function Settings() {
+function ConnectionRow({
+  platform,
+  handle,
+}: {
+  platform: Platform;
+  handle?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(handle ?? "");
+  const [pending, start] = useTransition();
+
+  function save() {
+    const v = value.trim();
+    if (!v) return;
+    start(async () => {
+      await upsertConnection(platform, v);
+      setEditing(false);
+    });
+  }
+  function disconnect() {
+    start(async () => {
+      await removeConnection(platform);
+      setValue("");
+      setEditing(false);
+    });
+  }
+
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <Icon name={connectionMeta[platform].icon} className="size-5 text-text-secondary" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-text">{connectionMeta[platform].label}</p>
+          {handle && !editing && <p className="truncate text-xs text-muted">{handle}</p>}
+        </div>
+        {handle && !editing ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditing(true)}
+              className="rounded-full bg-surface-3 px-3 py-1 text-xs font-semibold text-text-secondary hover:bg-hover"
+            >
+              Editar
+            </button>
+            <button
+              onClick={disconnect}
+              disabled={pending}
+              className="rounded-full px-2 py-1 text-xs font-semibold text-danger hover:bg-danger-tint disabled:opacity-50"
+            >
+              Remover
+            </button>
+          </div>
+        ) : !editing ? (
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded-full bg-brand px-3 py-1 text-xs font-bold text-on-brand hover:bg-brand-hover"
+          >
+            Conectar
+          </button>
+        ) : null}
+      </div>
+
+      {editing && (
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            autoFocus
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && save()}
+            placeholder={`Seu usuário no ${connectionMeta[platform].label}`}
+            className="h-10 min-w-0 flex-1 rounded-full bg-surface-2 px-4 text-sm text-text placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          />
+          <button
+            onClick={save}
+            disabled={pending || !value.trim()}
+            aria-label="Salvar"
+            className="flex size-10 items-center justify-center rounded-full bg-brand text-on-brand disabled:opacity-50"
+          >
+            <Check className="size-5" />
+          </button>
+          <button
+            onClick={() => {
+              setEditing(false);
+              setValue(handle ?? "");
+            }}
+            aria-label="Cancelar"
+            className="flex size-10 items-center justify-center rounded-full bg-surface-3 text-text-secondary hover:bg-hover"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Settings({
+  email,
+  connections,
+}: {
+  email: string;
+  connections: Partial<Record<Platform, string>>;
+}) {
   const [hidden, setHidden] = useState(false);
   const [discover, setDiscover] = useState(true);
   const [online, setOnline] = useState(true);
@@ -78,31 +182,18 @@ export function Settings() {
     <div>
       <Group title="Conta" icon={<UserIcon className="size-3.5" />}>
         <Row label="Editar perfil" hint="Foto, bio, jogos e interesses" href="/profile/edit" right={chevron} />
-        <Row label="E-mail" hint="voce@email.com" right={chevron} />
+        <Row label="E-mail" hint={email} />
         <Row label="Idioma" hint="Português (Brasil)" right={chevron} />
       </Group>
 
       <Group title="Privacidade" icon={<Lock className="size-3.5" />}>
-        <Row
-          label="Ocultar perfil"
-          hint="Ninguém encontra você em Descobrir"
-          right={<Switch checked={hidden} onChange={setHidden} label="Ocultar perfil" />}
-        />
-        <Row
-          label="Aparecer em Descobrir"
-          right={<Switch checked={discover} onChange={setDiscover} label="Aparecer em Descobrir" />}
-        />
-        <Row
-          label="Mostrar status online"
-          right={<Switch checked={online} onChange={setOnline} label="Mostrar status online" />}
-        />
+        <Row label="Ocultar perfil" hint="Ninguém encontra você em Descobrir" right={<Switch checked={hidden} onChange={setHidden} label="Ocultar perfil" />} />
+        <Row label="Aparecer em Descobrir" right={<Switch checked={discover} onChange={setDiscover} label="Aparecer em Descobrir" />} />
+        <Row label="Mostrar status online" right={<Switch checked={online} onChange={setOnline} label="Mostrar status online" />} />
       </Group>
 
       <Group title="Mensagens" icon={<MessageCircle className="size-3.5" />}>
-        <Row
-          label="Só matches podem me mandar mensagem"
-          right={<Switch checked={onlyMatches} onChange={setOnlyMatches} label="Só matches" />}
-        />
+        <Row label="Só matches podem me mandar mensagem" right={<Switch checked={onlyMatches} onChange={setOnlyMatches} label="Só matches" />} />
       </Group>
 
       <Group title="Notificações" icon={<Bell className="size-3.5" />}>
@@ -113,18 +204,7 @@ export function Settings() {
 
       <Group title="Conexões" icon={<Link2 className="size-3.5" />}>
         {(["steam", "spotify", "riot", "twitch"] as const).map((p) => (
-          <Row
-            key={p}
-            label={connectionMeta[p].label}
-            right={
-              <span className="flex items-center gap-2">
-                <Icon name={connectionMeta[p].icon} className="size-4 text-muted" />
-                <span className="rounded-full bg-surface-3 px-3 py-1 text-xs font-semibold text-text">
-                  Conectar
-                </span>
-              </span>
-            }
-          />
+          <ConnectionRow key={p} platform={p} handle={connections[p]} />
         ))}
       </Group>
 
@@ -133,12 +213,14 @@ export function Settings() {
         <Row label="Perfis ocultados" right={<EyeOff className="size-4 text-muted" />} />
       </Group>
 
-      <Card className="overflow-hidden">
-        <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-surface-2">
-          <LogOut className="size-4 text-danger" />
-          <span className="text-sm font-semibold text-danger">Sair da conta</span>
-        </button>
-      </Card>
+      <form action={signOut}>
+        <Card className="overflow-hidden">
+          <button type="submit" className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-surface-2">
+            <LogOut className="size-4 text-danger" />
+            <span className="text-sm font-semibold text-danger">Sair da conta</span>
+          </button>
+        </Card>
+      </form>
 
       <p className="mt-6 text-center text-xs text-muted">DisMe · versão 0.1.0</p>
     </div>

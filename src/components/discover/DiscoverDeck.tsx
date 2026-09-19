@@ -20,6 +20,7 @@ import { CrushIcon } from "@/components/icons/Crush";
 import { FilterSheet, type Filters, emptyFilters } from "./FilterSheet";
 import { MatchModal } from "./MatchModal";
 import { likeProfile } from "@/lib/actions";
+import { useAuthGate } from "@/components/auth/AuthProvider";
 
 const CRUSH_QUOTA = 3;
 
@@ -36,7 +37,8 @@ function applyFilters(list: User[], f: Filters) {
   });
 }
 
-export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User }) {
+export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User | null }) {
+  const { requireAuth } = useAuthGate();
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -64,11 +66,13 @@ export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User 
     advance();
   }
   async function onLike(u: User) {
+    if (!requireAuth()) return;
     advance();
     const res = await likeProfile(u.id, "like");
     if (res.matched) setMatch({ user: u, viaCrush: false });
   }
   async function onCrush(u: User) {
+    if (!requireAuth()) return;
     if (crushesLeft <= 0) return;
     setCrushesLeft((c) => c - 1);
     advance();
@@ -161,7 +165,7 @@ export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User 
       />
 
       <AnimatePresence>
-        {match && (
+        {match && me && (
           <MatchModal
             me={me}
             user={match.user}

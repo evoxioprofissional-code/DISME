@@ -191,6 +191,35 @@ export async function toggleFollow(toId: string): Promise<{ following: boolean }
   return { following: true };
 }
 
+// -------- connections --------
+export async function upsertConnection(
+  platform: "steam" | "spotify" | "riot" | "twitch" | "discord",
+  handle: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await createClient();
+  const id = await meId();
+  const clean = handle.trim();
+  if (!clean) return { ok: false, error: "Informe seu usuário." };
+  const { error } = await supabase
+    .from("connections")
+    .upsert({ profile_id: id, platform, handle: clean }, { onConflict: "profile_id,platform" });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function removeConnection(
+  platform: "steam" | "spotify" | "riot" | "twitch" | "discord",
+): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const id = await meId();
+  await supabase.from("connections").delete().eq("profile_id", id).eq("platform", platform);
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 // -------- notifications --------
 export async function markNotificationsRead() {
   const supabase = await createClient();

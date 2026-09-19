@@ -7,8 +7,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CrushIcon } from "@/components/icons/Crush";
 import { buttonClasses } from "@/components/ui/Button";
+import { LoginCta } from "@/components/auth/LoginCta";
 import { listMatches, getSessionUserId, type MatchData } from "@/lib/queries";
-import { redirect } from "next/navigation";
 
 function MatchCard({ match }: { match: MatchData }) {
   const u = match.user;
@@ -57,7 +57,17 @@ function MatchCard({ match }: { match: MatchData }) {
 
 export default async function MatchesPage() {
   const meId = await getSessionUserId();
-  if (!meId) redirect("/login");
+  if (!meId) {
+    return (
+      <PageContainer className="max-w-4xl">
+        <PageHeader title="Matches" subtitle="Quem também curtiu você" />
+        <LoginCta
+          title="Entre para ver seus matches"
+          description="Curta pessoas em Descobrir e, quando rolar match, ele aparece aqui."
+        />
+      </PageContainer>
+    );
+  }
   const matches = await listMatches(meId);
   const news = matches.slice(0, 4);
   const newIds = new Set(news.map((m) => m.id));

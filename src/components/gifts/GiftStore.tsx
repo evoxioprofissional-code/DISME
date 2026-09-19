@@ -9,6 +9,7 @@ import { GiftGlyph } from "./GiftGlyph";
 import { RarityTag } from "@/components/ui/RarityTag";
 import { SendGiftModal } from "./SendGiftModal";
 import { GiftRevealModal } from "./GiftRevealModal";
+import { useAuthGate } from "@/components/auth/AuthProvider";
 
 const CATS: { key: GiftCategory | "todos"; label: string }[] = [
   { key: "todos", label: "Todos" },
@@ -51,6 +52,7 @@ function GiftCard({ gift, onSelect }: { gift: Gift; onSelect: () => void }) {
 }
 
 export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: Gift[]; credits: number; candidates: User[]; presetUser?: User }) {
+  const { requireAuth } = useAuthGate();
   const [cat, setCat] = useState<GiftCategory | "todos">("todos");
   const [selected, setSelected] = useState<Gift | null>(null);
   const [sent, setSent] = useState<{ gift: Gift; recipient: User } | null>(null);
@@ -101,7 +103,7 @@ export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: G
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {list.map((g) => (
-          <GiftCard key={g.id} gift={g} onSelect={() => setSelected(g)} />
+          <GiftCard key={g.id} gift={g} onSelect={() => requireAuth(() => setSelected(g))} />
         ))}
       </div>
 

@@ -6,7 +6,7 @@ import { FeedItem } from "@/components/feed/FeedItem";
 import { MiniRanking, BattleTeaser, SuggestionsRail } from "@/components/home/widgets";
 
 export default async function HomePage() {
-  const meId = (await getSessionUserId())!;
+  const meId = await getSessionUserId();
   const [feed, suggestions, battles, flexTop] = await Promise.all([
     listFeed(),
     listSuggestions(meId),

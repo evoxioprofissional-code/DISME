@@ -139,10 +139,19 @@ export async function getProfileByUsername(username: string): Promise<User | nul
   return u;
 }
 
-export async function listDiscover(meId: string): Promise<User[]> {
+export async function getMyEmail(): Promise<string | null> {
+  const user = await getAuthUser();
+  return user?.email ?? null;
+}
+
+export async function listDiscover(meId: string | null): Promise<User[]> {
   const supabase = await createClient();
-  const { data: liked } = await supabase.from("likes").select("to_id").eq("from_id", meId);
-  const excluded = new Set<string>([meId, ...(liked ?? []).map((l: any) => l.to_id)]);
+  const excluded = new Set<string>();
+  if (meId) {
+    excluded.add(meId);
+    const { data: liked } = await supabase.from("likes").select("to_id").eq("from_id", meId);
+    (liked ?? []).forEach((l: any) => excluded.add(l.to_id));
+  }
   const { data } = await supabase
     .from("profiles")
     .select(PROFILE_COLS)
@@ -152,16 +161,15 @@ export async function listDiscover(meId: string): Promise<User[]> {
   return (data ?? []).map(mapProfile).filter((u) => !excluded.has(u.id));
 }
 
-export async function listSuggestions(meId: string, limit = 5): Promise<User[]> {
+export async function listSuggestions(meId: string | null, limit = 5): Promise<User[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  let query = supabase
     .from("profiles")
     .select(PROFILE_COLS)
     .eq("is_hidden", false)
-    .eq("onboarded", true)
-    .neq("id", meId)
-    .order("flex", { ascending: false })
-    .limit(limit);
+    .eq("onboarded", true);
+  if (meId) query = query.neq("id", meId);
+  const { data } = await query.order("flex", { ascending: false }).limit(limit);
   return (data ?? []).map(mapProfile);
 }
 

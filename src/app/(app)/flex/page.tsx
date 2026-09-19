@@ -2,15 +2,28 @@ import { ArrowUp, Gift, HandHeart, Trophy, Layers, Activity } from "lucide-react
 import { getMyProfile, listBattles, getFlexTop } from "@/lib/queries";
 import { formatNumber } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LoginCta } from "@/components/auth/LoginCta";
 import { Sparkline } from "@/components/flex/Sparkline";
 import { BattleCard } from "@/components/flex/BattleCard";
 import { MiniRanking } from "@/components/home/widgets";
 
 export default async function FlexPage() {
-  const me = (await getMyProfile())!;
+  const me = await getMyProfile();
+  if (!me) {
+    return (
+      <PageContainer>
+        <PageHeader title="Flex" subtitle="Seu status no DisMe" />
+        <LoginCta
+          title="Entre para ver seu Flex"
+          description="Sua pontuação, evolução e posição no ranking aparecem aqui depois que você entra."
+        />
+      </PageContainer>
+    );
+  }
   const [battles, flexTop] = await Promise.all([listBattles(), getFlexTop(10)]);
   const flex = me.stats.flex;
 

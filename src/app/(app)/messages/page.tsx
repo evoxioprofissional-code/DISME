@@ -7,11 +7,21 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { getSessionUserId, listConversations } from "@/lib/queries";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { redirect } from "next/navigation";
+import { LoginCta } from "@/components/auth/LoginCta";
 
 export default async function MessagesPage() {
   const meId = await getSessionUserId();
-  if (!meId) redirect("/login");
+  if (!meId) {
+    return (
+      <PageContainer>
+        <PageHeader title="Mensagens" subtitle="Suas conversas com quem deu match" />
+        <LoginCta
+          title="Entre para ver suas conversas"
+          description="Depois de dar match, suas conversas ficam aqui."
+        />
+      </PageContainer>
+    );
+  }
   const sorted = await listConversations(meId);
 
   return (

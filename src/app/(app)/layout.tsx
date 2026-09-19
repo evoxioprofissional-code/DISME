@@ -9,16 +9,20 @@ export default async function AppGroupLayout({
   children: React.ReactNode;
 }) {
   const shell = await getShellData();
-  if (!shell.me) redirect("/login");
-  if (!shell.onboarded) redirect("/onboarding");
 
-  const me: NavUser = {
-    username: shell.me.username,
-    displayName: shell.me.displayName,
-    avatar: shell.me.avatar,
-    presence: shell.me.presence,
-    flex: shell.me.stats.flex,
-  };
+  // Visitante navega livremente; só quem entrou e ainda não fez onboarding é levado a ele.
+  if (shell.me && !shell.onboarded) redirect("/onboarding");
+
+  const me: NavUser | null = shell.me
+    ? {
+        username: shell.me.username,
+        displayName: shell.me.displayName,
+        avatar: shell.me.avatar,
+        presence: shell.me.presence,
+        flex: shell.me.stats.flex,
+      }
+    : null;
+
   const badges = {
     matches: shell.newMatches,
     messages: shell.unreadMessages,

@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { CrushIcon } from "@/components/icons/Crush";
 import { getMyProfile, listNotifications, type NotifData } from "@/lib/queries";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LoginCta } from "@/components/auth/LoginCta";
 
 const typeIcon = {
   match: Zap,
@@ -70,7 +71,19 @@ function render(n: NotifData, myUsername: string): { text: React.ReactNode; href
 }
 
 export default async function NotificationsPage() {
-  const [notifications, me] = await Promise.all([listNotifications(), getMyProfile()]);
+  const me = await getMyProfile();
+  if (!me) {
+    return (
+      <PageContainer>
+        <PageHeader title="Notificações" />
+        <LoginCta
+          title="Entre para ver suas notificações"
+          description="Matches, presentes, crushes e conquistas aparecem aqui."
+        />
+      </PageContainer>
+    );
+  }
+  const notifications = await listNotifications();
   return (
     <PageContainer>
       <PageHeader title="Notificações" />
