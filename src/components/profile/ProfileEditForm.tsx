@@ -4,14 +4,15 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Camera, Check, ChevronLeft } from "lucide-react";
-import type { Intent, RelationshipStatus, User } from "@/types";
+import type { Intent, User } from "@/types";
 import { games as allGames } from "@/data";
-import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
+import { intentMeta, connectionMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
+import { updateProfile } from "@/lib/actions";
 
 const INTEREST_POOL = [
   "música", "anime", "fotografia", "lo-fi", "k-pop", "desenho", "setups",
@@ -57,11 +58,11 @@ export function ProfileEditForm({ user }: { user: User }) {
   const [age, setAge] = useState(String(user.age));
   const [pronouns, setPronouns] = useState(user.pronouns ?? "");
   const [intent, setIntent] = useState<Intent>(user.intent);
-  const [relationship, setRelationship] = useState<RelationshipStatus>(user.relationship);
   const [gameIds, setGameIds] = useState<string[]>(user.games);
   const [interests, setInterests] = useState<string[]>(user.interests);
   const [hidden, setHidden] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   const interestOptions = Array.from(new Set([...user.interests, ...INTEREST_POOL]));
 
@@ -145,17 +146,6 @@ export function ProfileEditForm({ user }: { user: User }) {
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Relacionamento</p>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(relationshipMeta) as RelationshipStatus[]).map((r) => (
-              <Chip key={r} active={relationship === r} onClick={() => setRelationship(r)}>
-                {relationshipMeta[r]}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
-        <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Jogos</p>
           <div className="flex flex-wrap gap-2">
             {allGames.map((g) => (
@@ -207,7 +197,13 @@ export function ProfileEditForm({ user }: { user: User }) {
       </div>
 
       <button
-        onClick={() => {
+        onClick={async () => {
+          setError("");
+          const result = await updateProfile({
+            displayName, username, bio, age: Number(age), pronouns, intent,
+            games: gameIds, interests, isHidden: hidden,
+          });
+          if (!result.ok) return setError(result.error ?? "Não foi possível salvar.");
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         }}
@@ -215,6 +211,7 @@ export function ProfileEditForm({ user }: { user: User }) {
       >
         {saved ? <><Check className="size-5" /> Salvo</> : "Salvar alterações"}
       </button>
+      {error && <p className="mt-2 text-center text-sm text-danger">{error}</p>}
     </div>
   );
 }

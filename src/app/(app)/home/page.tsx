@@ -1,42 +1,57 @@
-import { feed } from "@/data";
+import { listFeed, listSuggestions, listBattles, getRankings, getSessionUserId } from "@/lib/queries";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { FeedItem } from "@/components/feed/FeedItem";
 import { MiniRanking, BattleTeaser, SuggestionsRail } from "@/components/home/widgets";
 
-const suggestions = ["u6", "u11", "u13", "u7", "u16"];
+export default async function HomePage() {
+  const meId = (await getSessionUserId())!;
+  const [feed, suggestions, battles, rankings] = await Promise.all([
+    listFeed(),
+    listSuggestions(meId),
+    listBattles(),
+    getRankings(),
+  ]);
 
-export default function HomePage() {
+  const flexTop = rankings.flex
+    .filter((e) => e.user)
+    .map((e) => ({ rank: e.entry.rank, user: e.user!, value: e.entry.value }));
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 lg:py-8">
       <PageHeader title="Início" subtitle="O que está rolando no DisMe agora" />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6">
-          {/* mobile-only suggestions strip */}
           <div className="lg:hidden">
-            <SuggestionsRail userIds={suggestions} />
+            <SuggestionsRail users={suggestions} />
           </div>
 
-          <Card className="divide-y divide-border overflow-hidden">
-            {feed.map((activity) => (
-              <FeedItem key={activity.id} activity={activity} />
-            ))}
-          </Card>
+          {feed.length > 0 ? (
+            <Card className="divide-y divide-border overflow-hidden">
+              {feed.map((item) => (
+                <FeedItem key={item.activity.id} item={item} />
+              ))}
+            </Card>
+          ) : (
+            <EmptyState
+              title="O feed está começando"
+              description="Conforme as pessoas se conectam, os matches, presentes e conquistas aparecem aqui."
+            />
+          )}
 
-          {/* mobile-only rail widgets below the feed */}
           <div className="space-y-6 lg:hidden">
-            <BattleTeaser />
-            <MiniRanking />
+            <BattleTeaser battle={battles[0]} />
+            <MiniRanking entries={flexTop} />
           </div>
         </div>
 
-        {/* desktop right rail */}
         <aside className="hidden lg:block">
           <div className="sticky top-6 space-y-6">
-            <MiniRanking />
-            <BattleTeaser />
-            <SuggestionsRail userIds={suggestions} />
+            <MiniRanking entries={flexTop} />
+            <BattleTeaser battle={battles[0]} />
+            <SuggestionsRail users={suggestions} />
           </div>
         </aside>
       </div>

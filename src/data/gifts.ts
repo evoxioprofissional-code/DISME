@@ -119,9 +119,6 @@ export const gifts: Gift[] = [
   },
 ];
 
-/** Mock DisMe credit balance for the current user. */
-export const myCredits = 5200;
-
 const giftMap = new Map(gifts.map((g) => [g.id, g]));
 
 export function getGift(id: string): Gift | undefined {

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Timer, ChevronRight } from "lucide-react";
-import type { FlexBattle } from "@/types";
-import { getUser } from "@/data";
+import type { BattleData } from "@/lib/queries";
 import { cn, formatNumber, countdown } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
@@ -11,17 +10,14 @@ export function BattleCard({
   href,
   className,
 }: {
-  battle: FlexBattle;
+  battle: BattleData;
   href?: string;
   className?: string;
 }) {
-  const a = getUser(battle.userIds[0]);
-  const b = getUser(battle.userIds[1]);
-  if (!a || !b) return null;
-  const [sa, sb] = battle.scores;
-  const total = sa + sb;
-  const pct = Math.round((sa / total) * 100);
-  const leadingA = sa >= sb;
+  const { a, b, scoreA, scoreB } = battle;
+  const total = scoreA + scoreB || 1;
+  const pct = Math.round((scoreA / total) * 100);
+  const leadingA = scoreA >= scoreB;
 
   const inner = (
     <Card interactive={!!href} className="p-5">
@@ -30,18 +26,14 @@ export function BattleCard({
           <Avatar src={a.avatar} name={a.displayName} size="lg" />
           <div>
             <p className="font-bold text-text">{a.displayName}</p>
-            <p className={cn("tnum text-sm font-semibold", leadingA ? "text-brand" : "text-text-secondary")}>
-              {formatNumber(sa)}
-            </p>
+            <p className={cn("tnum text-sm font-semibold", leadingA ? "text-brand" : "text-text-secondary")}>{formatNumber(scoreA)}</p>
           </div>
         </div>
         <span className="mt-3 text-xs font-extrabold uppercase tracking-widest text-muted">vs</span>
         <div className="flex items-center gap-2.5 text-right">
           <div>
             <p className="font-bold text-text">{b.displayName}</p>
-            <p className={cn("tnum text-sm font-semibold", !leadingA ? "text-brand" : "text-text-secondary")}>
-              {formatNumber(sb)}
-            </p>
+            <p className={cn("tnum text-sm font-semibold", !leadingA ? "text-brand" : "text-text-secondary")}>{formatNumber(scoreB)}</p>
           </div>
           <Avatar src={b.avatar} name={b.displayName} size="lg" />
         </div>
@@ -66,12 +58,6 @@ export function BattleCard({
     </Card>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={cn("block", className)}>
-        {inner}
-      </Link>
-    );
-  }
+  if (href) return <Link href={href} className={cn("block", className)}>{inner}</Link>;
   return <div className={className}>{inner}</div>;
 }

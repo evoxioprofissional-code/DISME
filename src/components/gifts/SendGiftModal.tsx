@@ -4,19 +4,23 @@ import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { X, Search, Coins, Check } from "lucide-react";
 import type { Gift, User } from "@/types";
-import { users, currentUserId, myCredits } from "@/data";
 import { cn, formatNumber } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { GiftGlyph } from "./GiftGlyph";
 import { RarityTag } from "@/components/ui/RarityTag";
+import { sendGift } from "@/lib/actions";
 
 export function SendGiftModal({
   gift,
+  credits,
+  candidates,
   presetUser,
   onClose,
   onSent,
 }: {
   gift: Gift;
+  credits: number;
+  candidates: User[];
   presetUser?: User;
   onClose: () => void;
   onSent: (recipient: User) => void;
@@ -25,16 +29,15 @@ export function SendGiftModal({
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
 
-  const candidates = useMemo(() => {
-    const list = users.filter((u) => u.id !== currentUserId);
-    if (!query.trim()) return list.slice(0, 8);
+  const filteredCandidates = useMemo(() => {
+    if (!query.trim()) return candidates.slice(0, 8);
     const q = query.toLowerCase();
-    return list.filter(
+    return candidates.filter(
       (u) => u.displayName.toLowerCase().includes(q) || u.username.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, candidates]);
 
-  const affordable = myCredits >= gift.price;
+  const affordable = credits >= gift.price;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
@@ -101,7 +104,7 @@ export function SendGiftModal({
                 />
               </div>
               <div className="no-scrollbar max-h-52 space-y-1 overflow-y-auto">
-                {candidates.map((u) => {
+                {filteredCandidates.map((u) => {
                   const active = recipient?.id === u.id;
                   return (
                     <button
@@ -143,11 +146,15 @@ export function SendGiftModal({
         <div className="flex items-center gap-3 border-t border-border px-5 py-4">
           <div className="flex items-center gap-1.5 text-sm text-text-secondary">
             <Coins className="size-4 text-gold" />
-            <span className="tnum font-semibold text-text">{formatNumber(myCredits)}</span>
+            <span className="tnum font-semibold text-text">{formatNumber(credits)}</span>
           </div>
           <button
             disabled={!recipient || !affordable}
-            onClick={() => recipient && onSent(recipient)}
+            onClick={async () => {
+              if (!recipient) return;
+              const result = await sendGift(recipient.id, gift.id, message);
+              if (result.ok) onSent(recipient);
+            }}
             className="flex-1 rounded-full bg-brand py-3 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover disabled:opacity-40"
           >
             {affordable ? "Enviar presente" : "Créditos insuficientes"}

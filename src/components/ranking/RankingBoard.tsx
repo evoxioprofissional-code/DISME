@@ -1,28 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import type { RankingCategory, RankingEntry } from "@/types";
+import type { RankingCategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import { categoryMeta, RankingRow, TopThree } from "./parts";
+import { categoryMeta, RankingRow, TopThree, type RankEntry } from "./parts";
 
-const ORDER: RankingCategory[] = [
-  "flex",
-  "presenteados",
-  "colecionadores",
-  "casais",
-  "streaks",
-];
+const ORDER: RankingCategory[] = ["flex", "presenteados", "colecionadores", "casais", "streaks"];
 
 export function RankingBoard({
   data,
   initial = "flex",
 }: {
-  data: Record<RankingCategory, RankingEntry[]>;
+  data: Record<RankingCategory, RankEntry[]>;
   initial?: RankingCategory;
 }) {
   const [active, setActive] = useState<RankingCategory>(initial);
-  const entries = data[active];
+  const entries = data[active] ?? [];
   const unit = categoryMeta[active].unit;
   const hasSpotlight = entries.length >= 3;
   const listEntries = hasSpotlight ? entries.slice(3) : entries;
@@ -36,9 +30,7 @@ export function RankingBoard({
             onClick={() => setActive(cat)}
             className={cn(
               "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-              active === cat
-                ? "bg-brand text-on-brand"
-                : "bg-surface-2 text-text-secondary hover:bg-hover hover:text-text",
+              active === cat ? "bg-brand text-on-brand" : "bg-surface-2 text-text-secondary hover:bg-hover hover:text-text",
             )}
           >
             {categoryMeta[cat].short}
@@ -47,7 +39,7 @@ export function RankingBoard({
       </div>
 
       {entries.length === 0 && (
-        <p className="rounded-2xl border border-dashed border-border-strong bg-surface/50 px-4 py-8 text-center text-sm text-text-secondary">
+        <p className="rounded-2xl border border-dashed border-border-strong bg-surface/50 px-4 py-10 text-center text-sm text-text-secondary">
           Ainda não há gente suficiente nesse ranking.
         </p>
       )}
@@ -56,8 +48,8 @@ export function RankingBoard({
 
       {listEntries.length > 0 && (
         <Card className={cn("divide-y divide-border overflow-hidden", hasSpotlight && "mt-4")}>
-          {listEntries.map((entry) => (
-            <RankingRow key={`${active}-${entry.rank}`} entry={entry} unit={unit} />
+          {listEntries.map((e) => (
+            <RankingRow key={`${active}-${e.entry.rank}`} e={e} />
           ))}
         </Card>
       )}

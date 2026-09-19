@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Flame } from "lucide-react";
-import { couples, getUser } from "@/data";
+import { listCouples } from "@/lib/queries";
 import { relationshipMeta } from "@/lib/labels";
 import { pluralDays, formatNumber, longDate } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
@@ -8,15 +8,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 
-export default function CouplesPage() {
+export default async function CouplesPage() {
+  const couples = await listCouples();
   return (
     <PageContainer className="max-w-4xl">
       <PageHeader title="Casais" subtitle="Quem está junto no DisMe" />
       <div className="grid gap-4 sm:grid-cols-2">
-        {couples.map((c) => {
-          const a = getUser(c.userIds[0]);
-          const b = getUser(c.userIds[1]);
-          if (!a || !b) return null;
+        {couples.map(({ couple: c, a, b }) => {
           return (
             <Link key={c.id} href={`/couple/${c.id}`}>
               <Card interactive className="p-5">

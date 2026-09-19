@@ -1,15 +1,15 @@
-import { users, currentUserId, matches } from "@/data";
 import { DiscoverDeck } from "@/components/discover/DiscoverDeck";
+import { getMyProfile, listDiscover } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
-export default function DiscoverPage() {
-  const matchedIds = new Set(matches.map((m) => m.userId));
-  const candidates = users.filter(
-    (u) => u.id !== currentUserId && !matchedIds.has(u.id),
-  );
+export default async function DiscoverPage() {
+  const me = await getMyProfile();
+  if (!me) redirect("/login");
+  const candidates = await listDiscover(me.id);
 
   return (
     <div className="px-4 py-5 sm:px-6 lg:py-8">
-      <DiscoverDeck candidates={candidates} />
+      <DiscoverDeck candidates={candidates} me={me} />
     </div>
   );
 }

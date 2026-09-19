@@ -19,9 +19,8 @@ import { presenceLabel } from "@/components/ui/PresenceDot";
 import { CrushIcon } from "@/components/icons/Crush";
 import { FilterSheet, type Filters, emptyFilters } from "./FilterSheet";
 import { MatchModal } from "./MatchModal";
+import { likeProfile } from "@/lib/actions";
 
-// Deterministic demo: these users "curtem de volta".
-const MATCH_BACK = new Set(["u13", "u14", "u16"]);
 const CRUSH_QUOTA = 3;
 
 function applyFilters(list: User[], f: Filters) {
@@ -37,7 +36,7 @@ function applyFilters(list: User[], f: Filters) {
   });
 }
 
-export function DiscoverDeck({ candidates }: { candidates: User[] }) {
+export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User }) {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -64,15 +63,17 @@ export function DiscoverDeck({ candidates }: { candidates: User[] }) {
   function onPass() {
     advance();
   }
-  function onLike(u: User) {
-    if (MATCH_BACK.has(u.id)) setMatch({ user: u, viaCrush: false });
+  async function onLike(u: User) {
     advance();
+    const res = await likeProfile(u.id, "like");
+    if (res.matched) setMatch({ user: u, viaCrush: false });
   }
-  function onCrush(u: User) {
+  async function onCrush(u: User) {
     if (crushesLeft <= 0) return;
     setCrushesLeft((c) => c - 1);
-    setMatch({ user: u, viaCrush: true });
     advance();
+    const res = await likeProfile(u.id, "crush");
+    if (res.matched) setMatch({ user: u, viaCrush: true });
   }
 
   return (
@@ -162,6 +163,7 @@ export function DiscoverDeck({ candidates }: { candidates: User[] }) {
       <AnimatePresence>
         {match && (
           <MatchModal
+            me={me}
             user={match.user}
             viaCrush={match.viaCrush}
             onClose={() => setMatch(null)}

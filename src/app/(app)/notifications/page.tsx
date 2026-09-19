@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { Zap, Gift, TrendingUp, HeartHandshake, MessageCircle, Layers } from "lucide-react";
-import type { AppNotification } from "@/types";
-import { notifications, getUser, getGift, currentUser } from "@/data";
+import { getGift } from "@/data";
+import type { NotificationType } from "@/types";
 import { timeAgo, cn } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { CrushIcon } from "@/components/icons/Crush";
+import { getMyProfile, listNotifications, type NotifData } from "@/lib/queries";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const typeIcon = {
   match: Zap,
@@ -19,8 +21,8 @@ const typeIcon = {
   message: MessageCircle,
 } as const;
 
-function render(n: AppNotification): { text: React.ReactNode; href: string } {
-  const actor = n.actorId ? getUser(n.actorId) : undefined;
+function render(n: NotifData, myUsername: string): { text: React.ReactNode; href: string } {
+  const actor = n.actor;
   const gift = n.giftId ? getGift(n.giftId) : undefined;
   const name = actor ? <span className="font-bold text-text">{actor.displayName}</span> : null;
   const profileHref = actor ? `/profile/${actor.username}` : "/home";
@@ -43,7 +45,7 @@ function render(n: AppNotification): { text: React.ReactNode; href: string } {
       return n.meta?.collection
         ? {
             text: <>Sua coleção chegou a {String(n.meta.collection)} presentes.</>,
-            href: `/collection/${currentUser().username}`,
+            href: `/collection/${myUsername}`,
           }
         : {
             text: <>Seu relacionamento completou {String(n.meta?.days)} dias.</>,
@@ -62,18 +64,25 @@ function render(n: AppNotification): { text: React.ReactNode; href: string } {
       return { text: <>{name} pediu você em relacionamento.</>, href: profileHref };
     case "message":
       return { text: <>{name} te enviou uma mensagem.</>, href: "/messages" };
+    default:
+      return { text: <>Você recebeu uma nova notificação.</>, href: "/home" };
   }
 }
 
-export default function NotificationsPage() {
+export default async function NotificationsPage() {
+  const [notifications, me] = await Promise.all([listNotifications(), getMyProfile()]);
   return (
     <PageContainer>
       <PageHeader title="Notificações" />
+      {notifications.length === 0 ? (
+        <EmptyState title="Tudo tranquilo por aqui" description="Matches, presentes e mensagens aparecerão nesta central." />
+      ) : (
       <Card className="divide-y divide-border overflow-hidden">
         {notifications.map((n) => {
-          const actor = n.actorId ? getUser(n.actorId) : undefined;
-          const { text, href } = render(n);
-          const Icon = n.type === "crush" ? CrushIcon : typeIcon[n.type];
+          const actor = n.actor;
+          const { text, href } = render(n, me?.username ?? "me");
+          const notificationType = n.type as NotificationType;
+          const Icon = notificationType === "crush" ? CrushIcon : typeIcon[notificationType];
           return (
             <Link
               key={n.id}
@@ -106,6 +115,7 @@ export default function NotificationsPage() {
           );
         })}
       </Card>
+      )}
     </PageContainer>
   );
 }

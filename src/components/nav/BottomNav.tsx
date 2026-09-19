@@ -3,18 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { mobileNav, profileHref } from "@/lib/nav";
-import { currentUser } from "@/data";
+import { mobileNav, type NavUser, type NavBadges } from "@/lib/nav";
 import { Avatar } from "@/components/ui/Avatar";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function BottomNav() {
+export function BottomNav({ me, badges }: { me: NavUser; badges: NavBadges }) {
   const pathname = usePathname();
-  const me = currentUser();
-  const profile = profileHref();
   const profileActive = pathname.startsWith("/profile");
 
   return (
@@ -26,6 +23,7 @@ export function BottomNav() {
         {mobileNav.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
+          const badge = item.badgeKey ? badges[item.badgeKey] : 0;
           return (
             <li key={item.href}>
               <Link
@@ -34,22 +32,14 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
               >
                 <span className="relative">
-                  <Icon
-                    className={cn("size-6", active ? "text-brand" : "text-muted")}
-                    strokeWidth={active ? 2.5 : 2}
-                  />
-                  {!!item.badge && item.badge > 0 && (
+                  <Icon className={cn("size-6", active ? "text-brand" : "text-muted")} strokeWidth={active ? 2.5 : 2} />
+                  {!!badge && badge > 0 && (
                     <span className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-brand px-1 text-center text-[10px] font-bold leading-4 text-on-brand">
-                      {item.badge}
+                      {badge}
                     </span>
                   )}
                 </span>
-                <span
-                  className={cn(
-                    "text-[10px] font-semibold",
-                    active ? "text-text" : "text-muted",
-                  )}
-                >
+                <span className={cn("text-[10px] font-semibold", active ? "text-text" : "text-muted")}>
                   {item.label}
                 </span>
               </Link>
@@ -58,24 +48,14 @@ export function BottomNav() {
         })}
         <li>
           <Link
-            href={profile}
+            href={`/profile/${me.username}`}
             className="relative flex flex-col items-center gap-1 py-2.5"
             aria-current={profileActive ? "page" : undefined}
           >
-            <span
-              className={cn(
-                "rounded-full",
-                profileActive && "ring-2 ring-brand ring-offset-2 ring-offset-surface",
-              )}
-            >
+            <span className={cn("rounded-full", profileActive && "ring-2 ring-brand ring-offset-2 ring-offset-surface")}>
               <Avatar src={me.avatar} name={me.displayName} size="xs" />
             </span>
-            <span
-              className={cn(
-                "text-[10px] font-semibold",
-                profileActive ? "text-text" : "text-muted",
-              )}
-            >
+            <span className={cn("text-[10px] font-semibold", profileActive ? "text-text" : "text-muted")}>
               Perfil
             </span>
           </Link>

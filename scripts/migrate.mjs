@@ -19,13 +19,34 @@ const client = new pg.Client({
 
 await client.connect();
 console.log('connected to', process.env.PGHOST);
+await client.query(`
+  create table if not exists public.disme_schema_migrations (
+    name text primary key,
+    applied_at timestamptz not null default now()
+  )
+`);
 for (const f of files) {
+  const { rowCount } = await client.query(
+    'select 1 from public.disme_schema_migrations where name = $1',
+    [f],
+  );
+  if (rowCount) {
+    console.log(`skipping ${f} (already applied)`);
+    continue;
+  }
   const sql = readFileSync(join(dir, f), 'utf8');
   process.stdout.write(`applying ${f} ... `);
   try {
+    await client.query('begin');
     await client.query(sql);
+    await client.query(
+      'insert into public.disme_schema_migrations (name) values ($1)',
+      [f],
+    );
+    await client.query('commit');
     console.log('OK');
   } catch (e) {
+    await client.query('rollback');
     console.log('FAIL');
     console.error('  ->', e.message);
     await client.end();

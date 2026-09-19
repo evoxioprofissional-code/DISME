@@ -5,20 +5,19 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { X } from "lucide-react";
 import type { User } from "@/types";
-import { currentUser } from "@/data";
 import { CrushIcon } from "@/components/icons/Crush";
 
 export function MatchModal({
+  me,
   user,
   viaCrush,
   onClose,
 }: {
+  me: User;
   user: User;
   viaCrush: boolean;
   onClose: () => void;
 }) {
-  const me = currentUser();
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       <motion.div

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Coins } from "lucide-react";
 import type { Gift, GiftCategory, User } from "@/types";
-import { gifts, myCredits, getUserByUsername } from "@/data";
 import { cn, formatNumber } from "@/lib/utils";
 import { GiftGlyph } from "./GiftGlyph";
 import { RarityTag } from "@/components/ui/RarityTag";
@@ -51,15 +50,14 @@ function GiftCard({ gift, onSelect }: { gift: Gift; onSelect: () => void }) {
   );
 }
 
-export function GiftStore({ presetUsername }: { presetUsername?: string }) {
+export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: Gift[]; credits: number; candidates: User[]; presetUser?: User }) {
   const [cat, setCat] = useState<GiftCategory | "todos">("todos");
   const [selected, setSelected] = useState<Gift | null>(null);
   const [sent, setSent] = useState<{ gift: Gift; recipient: User } | null>(null);
-  const presetUser = presetUsername ? getUserByUsername(presetUsername) : undefined;
 
   const list = useMemo(
     () => (cat === "todos" ? gifts : gifts.filter((g) => g.category === cat)),
-    [cat],
+    [cat, gifts],
   );
 
   return (
@@ -69,7 +67,7 @@ export function GiftStore({ presetUsername }: { presetUsername?: string }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Seus créditos</p>
           <p className="tnum flex items-center gap-1.5 text-lg font-extrabold text-text">
             <Coins className="size-4 text-gold" />
-            {formatNumber(myCredits)}
+            {formatNumber(credits)}
           </p>
         </div>
         <button className="rounded-full bg-surface-3 px-4 py-2 text-sm font-semibold text-text transition-colors hover:bg-hover">
@@ -111,6 +109,8 @@ export function GiftStore({ presetUsername }: { presetUsername?: string }) {
         {selected && (
           <SendGiftModal
             gift={selected}
+            credits={credits}
+            candidates={candidates}
             presetUser={presetUser}
             onClose={() => setSelected(null)}
             onSent={(recipient) => {

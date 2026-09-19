@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Gift, ImageIcon, Send } from "lucide-react";
 import type { Conversation, Message, User } from "@/types";
 import { getGift } from "@/data";
+import { sendMessage } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { GiftGlyph } from "@/components/gifts/GiftGlyph";
@@ -70,7 +71,7 @@ export function ChatThread({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
-  function send() {
+  async function send() {
     const body = draft.trim();
     if (!body) return;
     setMessages((m) => [
@@ -84,6 +85,11 @@ export function ChatThread({
       },
     ]);
     setDraft("");
+    const result = await sendMessage({ conversationId: conversation.id, body });
+    if (!result.ok) {
+      setMessages((items) => items.filter((item) => !item.id.startsWith("local-")));
+      setDraft(body);
+    }
   }
 
   return (

@@ -1,6 +1,8 @@
 import { PageContainer } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { GiftStore } from "@/components/gifts/GiftStore";
+import { getMyCredits, getMyProfile, getProfileByUsername, listGiftCatalog, listSuggestions } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
 export default async function GiftsPage({
   searchParams,
@@ -8,10 +10,18 @@ export default async function GiftsPage({
   searchParams: Promise<{ to?: string }>;
 }) {
   const { to } = await searchParams;
+  const me = await getMyProfile();
+  if (!me) redirect("/login");
+  const [gifts, candidates, presetUser, credits] = await Promise.all([
+    listGiftCatalog(),
+    listSuggestions(me.id, 20),
+    to ? getProfileByUsername(to) : Promise.resolve(null),
+    getMyCredits(),
+  ]);
   return (
     <PageContainer className="max-w-4xl">
       <PageHeader title="Presentes" subtitle="Envie algo que a pessoa vai guardar" />
-      <GiftStore presetUsername={to} />
+      <GiftStore gifts={gifts} credits={credits} candidates={candidates} presetUser={presetUser ?? undefined} />
     </PageContainer>
   );
 }

@@ -17,14 +17,17 @@ import {
 import { AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { RelationshipModal } from "@/components/relationship/RelationshipModal";
+import { requestRelationship } from "@/lib/actions";
 
 export function ProfileActions({
   isSelf,
+  userId,
   username,
   displayName,
   canRelationship,
 }: {
   isSelf: boolean;
+  userId: string;
   username: string;
   displayName: string;
   canRelationship: boolean;
@@ -125,7 +128,9 @@ export function ProfileActions({
         <RelationshipModal
           displayName={displayName}
           onClose={() => setRelModal(false)}
-          onSend={() => {
+          onSend={async (type, message) => {
+            const result = await requestRelationship(userId, type, message);
+            if (!result.ok) return;
             setRelRequested(true);
             setRelModal(false);
           }}

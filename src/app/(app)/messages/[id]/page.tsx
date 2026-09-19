@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { conversations, getUser, currentUserId } from "@/data";
 import { ChatThread } from "@/components/messages/ChatThread";
+import { getConversation, getSessionUserId } from "@/lib/queries";
 
 export default async function ConversationPage({
   params,
@@ -8,10 +8,17 @@ export default async function ConversationPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const conversation = conversations.find((c) => c.id === id);
-  if (!conversation) notFound();
-  const other = getUser(conversation.userId);
-  if (!other) notFound();
+  const meId = await getSessionUserId();
+  if (!meId) notFound();
+  const thread = await getConversation(id, meId);
+  if (!thread) notFound();
+  const conversation = {
+    id: thread.id,
+    userId: thread.other.id,
+    messages: thread.messages,
+    updatedAt: thread.messages.at(-1)?.createdAt ?? new Date().toISOString(),
+    unread: 0,
+  };
 
-  return <ChatThread conversation={conversation} other={other} meId={currentUserId} />;
+  return <ChatThread conversation={conversation} other={thread.other} meId={meId} />;
 }

@@ -1,6 +1,6 @@
 import { Flame } from "lucide-react";
-import type { Couple } from "@/types";
-import { getUser, getGift } from "@/data";
+import type { Couple, User } from "@/types";
+import { getGift } from "@/data";
 import { cn, longDate, formatNumber } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { GiftGlyph } from "@/components/gifts/GiftGlyph";
@@ -94,14 +94,14 @@ function PetGlyph({ className }: { className?: string }) {
   );
 }
 
-export function CoupleTimeline({ couple }: { couple: Couple }) {
+export function CoupleTimeline({ couple, users }: { couple: Couple; users: User[] }) {
   const events = [...couple.history].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
   return (
     <ol className="relative ml-1 space-y-5 border-l border-border pl-6">
       {events.map((e) => {
-        const from = getUser(e.fromUserId);
+        const from = users.find((user) => user.id === e.fromUserId);
         const gift = e.giftId ? getGift(e.giftId) : undefined;
         return (
           <li key={e.id} className="relative">

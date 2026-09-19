@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import type { Gender, Intent } from "@/types";
-import { games as allGames, users } from "@/data";
+import { games as allGames } from "@/data";
 import { intentMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +35,10 @@ const genderLabels: Record<Gender, string> = {
   outro: "Outro",
 };
 
-const topInterests = Array.from(new Set(users.flatMap((u) => u.interests))).slice(0, 14);
+const topInterests = [
+  "música", "anime", "fotografia", "programação", "academia", "séries",
+  "gatos", "cosplay", "desenho", "skate", "poesia", "café",
+];
 
 function toggle<T>(arr: T[], v: T): T[] {
   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
@@ -87,10 +90,6 @@ export function FilterSheet({
   onApply: (f: Filters) => void;
 }) {
   const [draft, setDraft] = useState<Filters>(value);
-
-  useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
 
   return (
     <AnimatePresence>

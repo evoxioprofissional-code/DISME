@@ -1,18 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import type { Match } from "@/types";
-import { matches, getUser } from "@/data";
 import { timeAgo } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CrushIcon } from "@/components/icons/Crush";
 import { buttonClasses } from "@/components/ui/Button";
+import { listMatches, getSessionUserId, type MatchData } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
-function MatchCard({ match }: { match: Match }) {
-  const u = getUser(match.userId);
-  if (!u) return null;
+function MatchCard({ match }: { match: MatchData }) {
+  const u = match.user;
   return (
     <div className="group overflow-hidden rounded-2xl border border-border bg-surface">
       <Link href={`/profile/${u.username}`} className="relative block aspect-[3/4]">
@@ -24,15 +23,15 @@ function MatchCard({ match }: { match: Match }) {
           className="object-cover"
         />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 to-transparent" />
-        {(match.isNew || match.viaCrush) && (
+        {match.viaCrush && (
           <span
             className={
               "absolute left-2 top-2 flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold " +
-              (match.viaCrush ? "bg-rarity-limited/90 text-white" : "bg-brand text-on-brand")
+              "bg-rarity-limited/90 text-white"
             }
           >
-            {match.viaCrush ? <CrushIcon className="size-3" /> : null}
-            {match.viaCrush ? "Crush" : "Novo"}
+            <CrushIcon className="size-3" />
+            Crush
           </span>
         )}
         <div className="absolute inset-x-0 bottom-0 p-3">
@@ -56,9 +55,13 @@ function MatchCard({ match }: { match: Match }) {
   );
 }
 
-export default function MatchesPage() {
-  const news = matches.filter((m) => m.isNew);
-  const rest = matches.filter((m) => !m.isNew);
+export default async function MatchesPage() {
+  const meId = await getSessionUserId();
+  if (!meId) redirect("/login");
+  const matches = await listMatches(meId);
+  const news = matches.slice(0, 4);
+  const newIds = new Set(news.map((m) => m.id));
+  const rest = matches.filter((m) => !newIds.has(m.id));
 
   return (
     <PageContainer className="max-w-4xl">

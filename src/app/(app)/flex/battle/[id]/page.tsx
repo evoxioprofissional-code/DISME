@@ -1,22 +1,11 @@
 import { notFound } from "next/navigation";
 import { Timer, ShieldCheck } from "lucide-react";
-import { getBattle, getUser } from "@/data";
+import { getBattleById } from "@/lib/queries";
 import { formatNumber, countdown } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
-import { Section } from "@/components/ui/Section";
 import { Avatar } from "@/components/ui/Avatar";
 import { CheerBar } from "@/components/flex/CheerBar";
-
-const gainsA = [
-  { label: "Recebeu Coroa", value: 700 },
-  { label: "Presente enviado", value: 260 },
-  { label: "Conquista desbloqueada", value: 400 },
-];
-const gainsB = [
-  { label: "Recebeu Galáxia", value: 1400 },
-  { label: "Coleção atualizada", value: 300 },
-];
 
 export default async function BattlePage({
   params,
@@ -24,16 +13,12 @@ export default async function BattlePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const battle = getBattle(id);
+  const battle = await getBattleById(id);
   if (!battle) notFound();
 
-  const a = getUser(battle.userIds[0]);
-  const b = getUser(battle.userIds[1]);
-  if (!a || !b) notFound();
-
-  const [sa, sb] = battle.scores;
-  const total = sa + sb;
-  const pct = Math.round((sa / total) * 100);
+  const { a, b, scoreA, scoreB } = battle;
+  const total = scoreA + scoreB || 1;
+  const pct = Math.round((scoreA / total) * 100);
 
   return (
     <PageContainer>
@@ -45,21 +30,18 @@ export default async function BattlePage({
         </div>
       </div>
 
-      {/* Head to head */}
       <Card className="p-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-1 flex-col items-center text-center">
             <Avatar src={a.avatar} name={a.displayName} size="2xl" presence={a.presence} />
             <p className="mt-2 font-bold text-text">{a.displayName}</p>
-            <p className="tnum text-2xl font-extrabold text-brand">{formatNumber(sa)}</p>
+            <p className="tnum text-2xl font-extrabold text-brand">{formatNumber(scoreA)}</p>
           </div>
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-extrabold uppercase tracking-widest text-muted">
-            vs
-          </span>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-extrabold uppercase tracking-widest text-muted">vs</span>
           <div className="flex flex-1 flex-col items-center text-center">
             <Avatar src={b.avatar} name={b.displayName} size="2xl" presence={b.presence} />
             <p className="mt-2 font-bold text-text">{b.displayName}</p>
-            <p className="tnum text-2xl font-extrabold text-text">{formatNumber(sb)}</p>
+            <p className="tnum text-2xl font-extrabold text-text">{formatNumber(scoreB)}</p>
           </div>
         </div>
 
@@ -75,30 +57,6 @@ export default async function BattlePage({
 
       <div className="mt-4">
         <CheerBar nameA={a.displayName} nameB={b.displayName} />
-      </div>
-
-      {/* Gains during the period */}
-      <div className="mt-7 grid gap-6 sm:grid-cols-2">
-        <Section title={`Flex de ${a.displayName}`}>
-          <Card className="divide-y divide-border overflow-hidden">
-            {gainsA.map((g, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-text-secondary">{g.label}</span>
-                <span className="tnum text-sm font-bold text-success">+{formatNumber(g.value)}</span>
-              </div>
-            ))}
-          </Card>
-        </Section>
-        <Section title={`Flex de ${b.displayName}`}>
-          <Card className="divide-y divide-border overflow-hidden">
-            {gainsB.map((g, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-text-secondary">{g.label}</span>
-                <span className="tnum text-sm font-bold text-success">+{formatNumber(g.value)}</span>
-              </div>
-            ))}
-          </Card>
-        </Section>
       </div>
 
       <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-border bg-surface/60 px-4 py-3.5 text-sm text-text-secondary">

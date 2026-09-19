@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCouple, getUser, getGame, getGift, getCollection } from "@/data";
+import { getGame } from "@/data";
+import { getCollection, getCoupleById } from "@/lib/queries";
 import { relationshipMeta } from "@/lib/labels";
 import { longDate, pluralDays, formatNumber } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
@@ -17,16 +18,14 @@ export default async function CouplePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const couple = getCouple(id);
-  if (!couple) notFound();
-  const a = getUser(couple.userIds[0]);
-  const b = getUser(couple.userIds[1]);
-  if (!a || !b) notFound();
+  const data = await getCoupleById(id);
+  if (!data) notFound();
+  const { couple, a, b } = data;
 
   const unlocked = couple.achievements.filter((x) => x.unlockedAt).length;
   const collection = [
-    ...getCollection(a.id, 4),
-    ...getCollection(b.id, 4),
+    ...(await getCollection(a.id, 4)),
+    ...(await getCollection(b.id, 4)),
   ].slice(0, 8);
 
   const stats = [
@@ -74,13 +73,13 @@ export default async function CouplePage({
           </Section>
 
           <Section title="História do casal">
-            <CoupleTimeline couple={couple} />
+            <CoupleTimeline couple={couple} users={[a, b]} />
           </Section>
 
           <Section title="Coleção do casal">
             <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 lg:grid-cols-8">
               {collection.map((og, i) => {
-                const gift = getGift(og.giftId)!;
+                const gift = og.gift;
                 return (
                   <GiftGlyph
                     key={`${og.id}-${i}`}

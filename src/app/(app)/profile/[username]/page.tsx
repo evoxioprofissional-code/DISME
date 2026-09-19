@@ -2,15 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, ChevronRight } from "lucide-react";
-import {
-  getUserByUsername,
-  getUser,
-  getGame,
-  getGift,
-  getCollection,
-  getCoupleByUser,
-  currentUserId,
-} from "@/data";
+import { getGame } from "@/data";
+import { getCollection, getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
 import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
 import { formatNumber, formatCompact, serial as fmtSerial, pluralDays } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
@@ -29,13 +22,15 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const user = getUserByUsername(username);
+  const user = await getProfileByUsername(username);
   if (!user) notFound();
 
+  const currentUserId = await getSessionUserId();
   const isSelf = user.id === currentUserId;
-  const partner = user.partnerId ? getUser(user.partnerId) : undefined;
-  const couple = getCoupleByUser(user.id);
-  const collection = getCollection(user.id, 8);
+  const coupleData = await getCoupleByUser(user.id);
+  const couple = coupleData?.couple;
+  const partner = coupleData ? (coupleData.a.id === user.id ? coupleData.b : coupleData.a) : undefined;
+  const collection = await getCollection(user.id, 8);
   const canRelationship = !isSelf && user.relationship === "solteiro";
 
   const stats = [
@@ -84,6 +79,7 @@ export default async function ProfilePage({
             <div className="pb-1">
               <ProfileActions
                 isSelf={isSelf}
+                userId={user.id}
                 username={user.username}
                 displayName={user.displayName}
                 canRelationship={canRelationship}
@@ -178,7 +174,7 @@ export default async function ProfilePage({
           >
             <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6">
               {collection.map((og) => {
-                const gift = getGift(og.giftId)!;
+                const gift = og.gift;
                 return (
                   <div key={og.id} className="text-center">
                     <GiftGlyph

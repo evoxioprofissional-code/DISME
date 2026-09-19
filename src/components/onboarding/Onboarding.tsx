@@ -9,6 +9,7 @@ import { games as allGames } from "@/data";
 import { intentMeta } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { completeOnboarding } from "@/lib/actions";
 
 const INTERESTS = [
   "música", "anime", "fotografia", "lo-fi", "k-pop", "desenho", "setups",
@@ -46,6 +47,8 @@ export function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Data>(initial);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const ageNum = parseInt(d.age, 10);
   const ageValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 99;
 
@@ -65,10 +68,31 @@ export function Onboarding() {
   const isFirst = step === 0;
   const isLast = step === total - 1;
 
-  function next() {
-    if (!current.valid) return;
+  async function next() {
+    if (!current.valid || saving) return;
     if (isLast) {
+      setSaving(true);
+      setErr(null);
+      const res = await completeOnboarding({
+        displayName: d.displayName,
+        username: d.username,
+        age: ageNum,
+        intent: d.intent!,
+        interests: d.interests,
+        games: d.games,
+      });
+      if (!res.ok) {
+        setSaving(false);
+        setErr(
+          res.error?.includes("duplicate") || res.error?.includes("unique")
+            ? "Esse nome de usuário já está em uso."
+            : "Não foi possível salvar. Tente novamente.",
+        );
+        setStep(1); // volta para identidade
+        return;
+      }
       router.push("/home");
+      router.refresh();
       return;
     }
     setStep((s) => Math.min(s + 1, total - 1));
@@ -147,6 +171,7 @@ export function Onboarding() {
                     />
                   </div>
                 </Field>
+                {err && <p className="text-sm font-medium text-danger">{err}</p>}
               </Step>
             )}
 
@@ -261,10 +286,10 @@ export function Onboarding() {
 
         <button
           onClick={next}
-          disabled={!current.valid}
+          disabled={!current.valid || saving}
           className="mt-6 h-13 w-full rounded-full bg-brand text-[15px] font-bold text-on-brand transition-colors hover:bg-brand-hover disabled:opacity-40"
         >
-          {isLast ? "Entrar no DisMe" : isFirst ? "Começar" : "Continuar"}
+          {saving ? "Salvando..." : isLast ? "Entrar no DisMe" : isFirst ? "Começar" : "Continuar"}
         </button>
       </div>
     </main>

@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import type { Rarity } from "@/types";
-import { getUserByUsername, getUser, getGift, getCollection } from "@/data";
-import { rarityLabel } from "@/data/gifts";
+import { getCollection, getProfileByUsername } from "@/lib/queries";
 import { serial as fmtSerial, timeAgo } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { GiftGlyph } from "@/components/gifts/GiftGlyph";
@@ -18,13 +17,13 @@ export default async function CollectionPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const user = getUserByUsername(username);
+  const user = await getProfileByUsername(username);
   if (!user) notFound();
 
-  const collection = getCollection(user.id, 12);
+  const collection = await getCollection(user.id, 48);
 
   const byRarity = collection.reduce<Record<string, number>>((acc, og) => {
-    const g = getGift(og.giftId)!;
+    const g = og.gift;
     acc[g.rarity] = (acc[g.rarity] ?? 0) + 1;
     return acc;
   }, {});
@@ -64,8 +63,8 @@ export default async function CollectionPage({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {collection.map((og) => {
-          const gift = getGift(og.giftId)!;
-          const from = getUser(og.fromUserId);
+          const gift = og.gift;
+          const from = og.from;
           const rare = RARE_SET.includes(gift.rarity);
           return (
             <div

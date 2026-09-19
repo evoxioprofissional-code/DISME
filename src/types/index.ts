@@ -1,4 +1,4 @@
-// DisMe — domain model. Mock-first, but shaped for a real backend later.
+// DisMe — modelos de domínio usados entre o Supabase e a interface.
 
 export type Rarity = "common" | "rare" | "epic" | "legendary" | "limited";
 

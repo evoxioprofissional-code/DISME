@@ -7,21 +7,17 @@ import {
   Layers,
   Zap,
 } from "lucide-react";
-import type { FeedActivity } from "@/types";
-import { getUser, getGift } from "@/data";
+import type { User } from "@/types";
+import type { FeedItemData } from "@/lib/queries";
 import { timeAgo, serial as fmtSerial } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { GiftGlyph } from "@/components/gifts/GiftGlyph";
 
-function Name({ id }: { id: string }) {
-  const u = getUser(id);
-  if (!u) return null;
+function Name({ user }: { user?: User }) {
+  if (!user) return <span className="font-bold text-text">alguém</span>;
   return (
-    <Link
-      href={`/profile/${u.username}`}
-      className="font-bold text-text hover:text-brand"
-    >
-      {u.displayName}
+    <Link href={`/profile/${user.username}`} className="font-bold text-text hover:text-brand">
+      {user.displayName}
     </Link>
   );
 }
@@ -36,100 +32,56 @@ const typeIcon = {
   match: Zap,
 } as const;
 
-export function FeedItem({ activity }: { activity: FeedActivity }) {
-  const a = getUser(activity.actors[0]);
-  const b = activity.actors[1] ? getUser(activity.actors[1]) : undefined;
-  const gift = activity.giftId ? getGift(activity.giftId) : undefined;
+export function FeedItem({ item }: { item: FeedItemData }) {
+  const { activity, actors, gift } = item;
+  const a = actors[0];
+  const b = actors[1];
   const Icon = typeIcon[activity.type];
 
   let text: React.ReactNode = null;
-
   switch (activity.type) {
     case "relationship": {
       const kind = activity.meta?.kind === "webnamoro" ? "um webnamoro" : "um namoro";
-      text = (
-        <>
-          <Name id={activity.actors[0]} /> e <Name id={activity.actors[1]} /> começaram {kind}.
-        </>
-      );
+      text = (<><Name user={a} /> e <Name user={b} /> começaram {kind}.</>);
       break;
     }
     case "gift":
-      text = (
-        <>
-          <Name id={activity.actors[0]} /> recebeu{" "}
-          <span className="font-semibold text-text">{gift?.name}</span> de{" "}
-          <Name id={activity.actors[1]} />.
-        </>
-      );
+      text = (<><Name user={a} /> recebeu <span className="font-semibold text-text">{gift?.name}</span> de <Name user={b} />.</>);
       break;
     case "ranking": {
       const rank = Number(activity.meta?.rank ?? 0);
       const board = String(activity.meta?.board ?? "Flex");
-      text =
-        rank <= 10 ? (
-          <>
-            <Name id={activity.actors[0]} /> entrou no Top 10 de {board}.
-          </>
-        ) : (
-          <>
-            <Name id={activity.actors[0]} /> subiu {String(activity.meta?.moved ?? "")}{" "}
-            posições no {board}.
-          </>
-        );
+      text = rank <= 10
+        ? (<><Name user={a} /> entrou no Top 10 de {board}.</>)
+        : (<><Name user={a} /> subiu {String(activity.meta?.moved ?? "")} posições no {board}.</>);
       break;
     }
     case "milestone":
-      if (activity.meta?.days) {
-        text = (
-          <>
-            <Name id={activity.actors[0]} /> e <Name id={activity.actors[1]} /> completaram{" "}
-            {String(activity.meta.days)} dias juntos.
-          </>
-        );
-      } else {
-        text = (
-          <>
-            <Name id={activity.actors[0]} /> chegou a {String(activity.meta?.collection)}{" "}
-            presentes na coleção.
-          </>
-        );
-      }
+      text = activity.meta?.days
+        ? (<><Name user={a} /> e <Name user={b} /> completaram {String(activity.meta.days)} dias juntos.</>)
+        : (<><Name user={a} /> chegou a {String(activity.meta?.collection)} presentes na coleção.</>);
       break;
     case "profile":
-      text = (
-        <>
-          <Name id={activity.actors[0]} /> atualizou o perfil.
-        </>
-      );
+      text = (<><Name user={a} /> atualizou o perfil.</>);
       break;
     case "collection":
       text = (
         <>
-          <Name id={activity.actors[0]} /> adicionou{" "}
-          <span className="font-semibold text-text">{gift?.name}</span> à coleção
+          <Name user={a} /> adicionou <span className="font-semibold text-text">{gift?.name}</span> à coleção
           {activity.meta?.serial && gift?.supply ? (
-            <span className="tnum text-text-secondary">
-              {" "}
-              ({fmtSerial(Number(activity.meta.serial), gift.supply)})
-            </span>
+            <span className="tnum text-text-secondary"> ({fmtSerial(Number(activity.meta.serial), gift.supply)})</span>
           ) : null}
           .
         </>
       );
       break;
     case "match":
-      text = (
-        <>
-          <Name id={activity.actors[0]} /> e <Name id={activity.actors[1]} /> deram match.
-        </>
-      );
+      text = (<><Name user={a} /> e <Name user={b} /> deram match.</>);
       break;
   }
 
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
-      {/* actor avatars */}
       <div className="relative shrink-0">
         {a && <Avatar src={a.avatar} name={a.displayName} size="md" />}
         {b && (
@@ -141,17 +93,11 @@ export function FeedItem({ activity }: { activity: FeedActivity }) {
           <Icon className="size-3 text-brand" strokeWidth={2.5} />
         </span>
       </div>
-
       <p className="min-w-0 flex-1 text-[15px] leading-snug text-text-secondary">
         {text}
-        <span className="ml-1.5 whitespace-nowrap text-xs text-muted">
-          · {timeAgo(activity.createdAt)}
-        </span>
+        <span className="ml-1.5 whitespace-nowrap text-xs text-muted">· {timeAgo(activity.createdAt)}</span>
       </p>
-
-      {gift && (
-        <GiftGlyph giftId={gift.id} rarity={gift.rarity} className="size-11 shrink-0" />
-      )}
+      {gift && <GiftGlyph giftId={gift.id} rarity={gift.rarity} className="size-11 shrink-0" />}
     </div>
   );
 }

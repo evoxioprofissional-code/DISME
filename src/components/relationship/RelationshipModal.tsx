@@ -5,10 +5,10 @@ import { motion } from "motion/react";
 import { X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type RelType = "namoro" | "webnamoro";
+type RelType = "namorando" | "webnamoro";
 
 const OPTIONS: { key: RelType; label: string; hint: string }[] = [
-  { key: "namoro", label: "Namoro", hint: "Oficial dentro do DisMe" },
+  { key: "namorando", label: "Namoro", hint: "Oficial dentro do DisMe" },
   { key: "webnamoro", label: "Webnamoro", hint: "À distância, mas de verdade" },
 ];
 
@@ -19,9 +19,9 @@ export function RelationshipModal({
 }: {
   displayName: string;
   onClose: () => void;
-  onSend: (type: RelType) => void;
+  onSend: (type: RelType, message: string) => void | Promise<void>;
 }) {
-  const [type, setType] = useState<RelType>("namoro");
+  const [type, setType] = useState<RelType>("namorando");
   const [message, setMessage] = useState("");
 
   return (
@@ -93,7 +93,7 @@ export function RelationshipModal({
           />
 
           <button
-            onClick={() => onSend(type)}
+            onClick={() => onSend(type, message)}
             className="w-full rounded-full bg-brand py-3 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
           >
             Enviar pedido

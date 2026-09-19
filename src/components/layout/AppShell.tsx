@@ -1,18 +1,27 @@
 import { Sidebar } from "@/components/nav/Sidebar";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { TopBar } from "@/components/nav/TopBar";
+import type { NavUser, NavBadges } from "@/lib/nav";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  me,
+  badges,
+}: {
+  children: React.ReactNode;
+  me: NavUser;
+  badges: NavBadges;
+}) {
   return (
     <div className="flex min-h-dvh bg-bg">
-      <Sidebar />
+      <Sidebar me={me} badges={badges} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar />
+        <TopBar me={me} badges={badges} />
         <main className="flex-1 pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom)))] lg:pb-0">
           {children}
         </main>
       </div>
-      <BottomNav />
+      <BottomNav me={me} badges={badges} />
     </div>
   );
 }
