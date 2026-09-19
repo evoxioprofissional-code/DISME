@@ -1,12 +1,13 @@
-import { SectionStub } from "@/components/layout/SectionStub";
+import { rankings } from "@/data";
+import { PageContainer } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { RankingBoard } from "@/components/ranking/RankingBoard";
 
 export default function RankingsPage() {
   return (
-    <SectionStub
-      title="Ranking"
-      subtitle="Os melhores da comunidade"
-      line="Flex, presenteados, colecionadores, casais e streaks — tudo disputado aqui em breve."
-      cta={{ label: "Voltar ao Início", href: "/home" }}
-    />
+    <PageContainer>
+      <PageHeader title="Ranking" subtitle="Os melhores da comunidade, atualizados toda semana" />
+      <RankingBoard data={rankings} />
+    </PageContainer>
   );
 }
