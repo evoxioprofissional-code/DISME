@@ -6,11 +6,26 @@ import {
   Bot,
   CalendarDays,
   Check,
+  ChevronDown,
   Clock3,
   Copy,
+  Download,
+  ExternalLink,
+  Flame,
+  Gem,
+  Gavel,
+  Handshake,
+  Hash,
+  Heart,
   History,
+  Bug,
+  Code,
   ScanSearch,
+  Scale,
   ShieldCheck,
+  Sparkles,
+  Star,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { DiscordLookupResult } from "@/types/discord";
@@ -35,6 +50,10 @@ function accountAge(value: string) {
   if (years > 0) return `${years} ${years === 1 ? "ano" : "anos"} e ${months} ${months === 1 ? "mês" : "meses"}`;
   return `${months} ${months === 1 ? "mês" : "meses"}`;
 }
+
+const badgeIcons = { shield: ShieldCheck, handshake: Handshake, sparkles: Sparkles, bug: Bug, flame: Flame, gem: Gem, scale: Scale, heart: Heart, bot: Bot, code: Code, gavel: Gavel, terminal: Terminal };
+
+const chipClass = "inline-flex items-center gap-1.5 rounded-full bg-surface-3 px-3 py-1.5 text-xs font-semibold text-text-secondary";
 
 export function DiscordLookup() {
   const [id, setId] = useState("");
@@ -143,6 +162,28 @@ function LookupResult({
               <Image src={user.avatarDecorationUrl} alt="" fill sizes="112px" className="pointer-events-none scale-[1.18] object-contain" />
             )}
           </div>
+          {user.avatarHash && (
+            <div className="mb-1 flex items-center gap-2">
+              <a
+                href={user.avatarUrl}
+                target="_blank"
+                rel="noreferrer"
+                title="Visualizar avatar original"
+                className="inline-flex size-10 items-center justify-center rounded-full border border-border-strong text-text-secondary hover:bg-surface-2 hover:text-text"
+                aria-label="Visualizar avatar original"
+              >
+                <ExternalLink className="size-4" />
+              </a>
+              <a
+                href={`/api/discord/avatar?id=${user.id}&hash=${encodeURIComponent(user.avatarHash)}&format=${user.avatarAnimated ? "gif" : "webp"}`}
+                title="Baixar avatar"
+                className="inline-flex size-10 items-center justify-center rounded-full border border-border-strong text-text-secondary hover:bg-surface-2 hover:text-text"
+                aria-label="Baixar avatar"
+              >
+                <Download className="size-4" />
+              </a>
+            </div>
+          )}
           <button
             type="button"
             onClick={onCopy}
@@ -176,13 +217,19 @@ function LookupResult({
           <InfoItem icon={ScanSearch} label="Visto pelo DisMe" value={formatDate(user.firstSeenAt)} />
         </div>
 
-        {(user.badges.length > 0 || user.primaryGuild?.tag) && (
+        {(user.badges.length > 0 ||
+          user.primaryGuild?.tag ||
+          user.nitro.active === true ||
+          user.nitroLikely ||
+          user.avatarDecorationUrl ||
+          user.nameplate ||
+          user.flairs.length > 0) && (
           <div className="mt-6">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Identidade pública</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {user.badges.map((badge) => (
-                <span key={badge.key} className="inline-flex items-center gap-1.5 rounded-full bg-surface-3 px-3 py-1.5 text-xs font-semibold text-text-secondary">
-                  <ShieldCheck className="size-4 text-brand" /> {badge.label}
+                <span key={badge.key} title={badge.since ? `${badge.description} Desde ${formatDate(badge.since)}` : badge.description} className={chipClass}>
+                  {(() => { const Icon = badgeIcons[badge.icon as keyof typeof badgeIcons] ?? ShieldCheck; return <Icon className="size-4 text-brand" />; })()} {badge.label}
                 </span>
               ))}
               {user.primaryGuild?.tag && (
@@ -191,9 +238,64 @@ function LookupResult({
                   {user.primaryGuild.tag}
                 </span>
               )}
+              {user.nitro.active === true ? (
+                <span title={user.nitro.since ? `Assinatura desde ${formatDate(user.nitro.since)}` : "Nitro retornado pelo Discord"} className={chipClass}>
+                  <Sparkles className="size-4 text-brand" /> {user.nitro.type ?? "Nitro"}
+                </span>
+              ) : (
+                user.nitroLikely && (
+                  <span title="Indícios de Nitro: avatar/banner animado, enfeite de avatar ou nameplate." className={chipClass}>
+                    <Sparkles className="size-4 text-brand" /> Provável Nitro
+                  </span>
+                )
+              )}
+              {user.avatarDecorationUrl && (
+                <span className={chipClass}>
+                  <Image src={user.avatarDecorationUrl} alt="" width={18} height={18} className="object-contain" /> Enfeite de avatar
+                </span>
+              )}
+              {user.nameplate && (
+                <span className={chipClass}>
+                  <Sparkles className="size-4 text-brand" /> Nameplate{user.nameplate.label ? `: ${user.nameplate.label}` : ""}
+                </span>
+              )}
+              {user.flairs.map((flair) => (
+                <span key={flair} className={chipClass}>
+                  <Star className="size-4 text-brand" /> {flair}
+                </span>
+              ))}
             </div>
           </div>
         )}
+
+        <section className="mt-6 border-t border-border pt-6">
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-extrabold text-text">
+              <span className="flex items-center gap-2"><Hash className="size-4 text-brand" /> Detalhes técnicos</span>
+              <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-4 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2">
+              <Detail label="Criação exata" value={formatDate(user.accountCreatedAt, true)} />
+              <Detail label="Idade da conta" value={`${user.accountAgeDays.toLocaleString("pt-BR")} dias`} />
+              <Detail label="Public flags" value={String(user.publicFlagsRaw)} />
+              <Detail label="Snowflake" value={`worker ${user.snowflake.workerId} · proc ${user.snowflake.processId} · #${user.snowflake.increment}`} />
+              <Detail
+                label="Avatar"
+                value={user.isDefaultAvatar ? "Padrão do Discord" : `${user.avatarAnimated ? "Animado" : "Estático"}${user.avatarHash ? ` · ${user.avatarHash.slice(0, 14)}…` : ""}`}
+              />
+              <Detail
+                label="Banner"
+                value={user.bannerHash ? `${user.bannerAnimated ? "Animado" : "Estático"} · ${user.bannerHash.slice(0, 14)}…` : "Sem banner"}
+              />
+              {user.accentColor != null && (
+                <Detail label="Cor de destaque" value={`#${user.accentColor.toString(16).padStart(6, "0")}`} swatch={`#${user.accentColor.toString(16).padStart(6, "0")}`} />
+              )}
+              {user.avatarDecorationExpiresAt && (
+                <Detail label="Enfeite expira em" value={formatDate(user.avatarDecorationExpiresAt)} />
+              )}
+            </div>
+          </details>
+        </section>
 
         <section className="mt-8 border-t border-border pt-6" aria-labelledby="identity-history-title">
           <div className="flex items-center justify-between gap-4">
@@ -209,10 +311,14 @@ function LookupResult({
           <div className="mt-5 divide-y divide-border">
             {history.map((version, index) => (
               <div key={version.id} className="flex items-center gap-3 py-4 first:pt-0 last:pb-0">
-                <Image src={version.avatarUrl} alt="" width={44} height={44} className="size-11 rounded-full bg-surface-3 object-cover" />
+                {version.avatarUrl ? (
+                  <Image src={version.avatarUrl} alt="" width={44} height={44} className="size-11 rounded-full bg-surface-3 object-cover" />
+                ) : (
+                  <div className="size-11 rounded-full bg-surface-3" aria-hidden="true" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-text">{version.displayName || version.username}</p>
-                  <p className="truncate text-xs text-text-secondary">@{version.username}</p>
+                  {version.username && <p className="truncate text-xs text-text-secondary">@{version.username}</p>}
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-xs font-semibold text-text-secondary">
@@ -237,6 +343,18 @@ function InfoItem({ icon: Icon, label, value }: { icon: typeof CalendarDays; lab
         <span className="text-[11px] font-bold uppercase tracking-wide">{label}</span>
       </div>
       <p className="mt-2 text-sm font-bold text-text">{value}</p>
+    </div>
+  );
+}
+
+function Detail({ label, value, swatch }: { label: string; value: string; swatch?: string }) {
+  return (
+    <div className="bg-surface-2 px-4 py-3">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</p>
+      <p className="mt-1 flex items-center gap-2 break-all font-mono text-xs text-text">
+        {swatch && <span className="size-3 shrink-0 rounded-full ring-1 ring-border-strong" style={{ backgroundColor: swatch }} />}
+        {value}
+      </p>
     </div>
   );
 }

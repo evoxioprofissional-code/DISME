@@ -1,5 +1,6 @@
 import "server-only";
-import type { DiscordBadge, DiscordPublicUser } from "@/types/discord";
+import { resolveBadges } from "@/lib/badges";
+import type { DiscordPublicUser } from "@/types/discord";
 
 const DISCORD_EPOCH = BigInt("1420070400000");
 const SNOWFLAKE_SHIFT = BigInt(22);
@@ -16,7 +17,9 @@ export interface DiscordApiUser {
   banner?: string | null;
   accent_color?: number | null;
   public_flags?: number;
-  avatar_decoration_data?: { asset: string; sku_id: string } | null;
+  premium_type?: number | null;
+  premium_since?: string | null;
+  avatar_decoration_data?: { asset: string; sku_id: string; expires_at?: number | string | null } | null;
   collectibles?: Record<string, unknown> | null;
   primary_guild?: {
     identity_guild_id?: string | null;
@@ -25,21 +28,6 @@ export interface DiscordApiUser {
     badge?: string | null;
   } | null;
 }
-
-const PUBLIC_FLAG_LABELS: Array<[number, string, string]> = [
-  [1 << 0, "staff", "Equipe do Discord"],
-  [1 << 1, "partner", "Parceiro"],
-  [1 << 2, "hypesquad", "HypeSquad Events"],
-  [1 << 3, "bug_hunter_1", "Bug Hunter"],
-  [1 << 6, "bravery", "HypeSquad Bravery"],
-  [1 << 7, "brilliance", "HypeSquad Brilliance"],
-  [1 << 8, "balance", "HypeSquad Balance"],
-  [1 << 9, "early_supporter", "Early Supporter"],
-  [1 << 14, "bug_hunter_2", "Bug Hunter Nível 2"],
-  [1 << 16, "verified_bot", "Bot verificado"],
-  [1 << 17, "verified_developer", "Desenvolvedor verificado"],
-  [1 << 18, "certified_moderator", "Moderator Alumni"],
-];
 
 export function isDiscordId(value: string) {
   return /^\d{17,20}$/.test(value);
@@ -51,19 +39,68 @@ export function discordAccountCreatedAt(id: string) {
 }
 
 export function discordAvatarUrl(id: string, hash?: string | null) {
-  if (hash) return `https://cdn.discordapp.com/avatars/${id}/${hash}.webp?size=512`;
+  if (hash) return discordAvatarAssetUrl(id, hash, 512) as string;
   const index = Number((BigInt(id) >> SNOWFLAKE_SHIFT) % DEFAULT_AVATAR_COUNT);
   return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }
 
-export function discordBannerUrl(id: string, hash?: string | null) {
-  return hash ? `https://cdn.discordapp.com/banners/${id}/${hash}.webp?size=1024` : null;
+export function discordAvatarAssetUrl(id: string, hash: string | null, size = 1024) {
+  if (!hash) return null;
+  const extension = hash.startsWith("a_") ? "gif" : "webp";
+  return `https://cdn.discordapp.com/avatars/${id}/${hash}.${extension}?size=${size}`;
 }
 
-export function discordBadges(flags = 0): DiscordBadge[] {
-  return PUBLIC_FLAG_LABELS.filter(([value]) => (flags & value) === value).map(
-    ([, key, label]) => ({ key, label }),
-  );
+export function discordBannerUrl(id: string, hash?: string | null) {
+  if (!hash) return null;
+  const extension = hash.startsWith("a_") ? "gif" : "webp";
+  return `https://cdn.discordapp.com/banners/${id}/${hash}.${extension}?size=1024`;
+}
+
+/** Snowflake breakdown — timestamp + internal worker/process/increment ids. */
+export function discordSnowflakeParts(id: string) {
+  const big = BigInt(id);
+  const timestamp = new Date(Number((big >> SNOWFLAKE_SHIFT) + DISCORD_EPOCH)).toISOString();
+  return {
+    timestamp,
+    workerId: Number((big >> BigInt(17)) & BigInt(0x1f)),
+    processId: Number((big >> BigInt(12)) & BigInt(0x1f)),
+    increment: Number(big & BigInt(0xfff)),
+  };
+}
+
+interface Nameplate {
+  label: string | null;
+  palette: string | null;
+  imageUrl: string | null;
+}
+
+function resolveNameplate(collectibles: Record<string, unknown> | null | undefined): Nameplate | null {
+  if (!collectibles || typeof collectibles !== "object") return null;
+  const nameplate = (collectibles as { nameplate?: unknown }).nameplate;
+  if (!nameplate || typeof nameplate !== "object") return null;
+  const data = nameplate as { asset?: unknown; label?: unknown; palette?: unknown };
+  const asset = typeof data.asset === "string" ? data.asset : null;
+  return {
+    label: typeof data.label === "string" ? data.label : null,
+    palette: typeof data.palette === "string" ? data.palette : null,
+    imageUrl: asset ? `https://cdn.discordapp.com/assets/collectibles/${asset}static.png` : null,
+  };
+}
+
+function decorationExpiry(value: number | string | null | undefined): string | null {
+  if (value == null) return null;
+  if (typeof value === "number") return new Date(value * 1000).toISOString();
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
+}
+
+function computeFlairs(createdAt: string, animated: boolean): string[] {
+  const flairs: string[] = [];
+  const year = new Date(createdAt).getUTCFullYear();
+  if (year <= 2015) flairs.push("Conta OG · pré-2016");
+  else if (year <= 2017) flairs.push("Conta antiga");
+  if (animated) flairs.push("Perfil animado");
+  return flairs;
 }
 
 export function normalizeDiscordUser(
@@ -80,24 +117,64 @@ export function normalizeDiscordUser(
       }
     : null;
 
+  const accountCreatedAt = discordAccountCreatedAt(user.id);
+  const avatarAnimated = Boolean(user.avatar?.startsWith("a_"));
+  const bannerAnimated = Boolean(user.banner?.startsWith("a_"));
+  const nameplate = resolveNameplate(user.collectibles);
+  const hasDecoration = Boolean(user.avatar_decoration_data?.asset);
+  const nitroLikely =
+    (user.premium_type != null && user.premium_type > 0) ||
+    avatarAnimated ||
+    bannerAnimated ||
+    hasDecoration ||
+    Boolean(nameplate);
+
   return {
     id: user.id,
     username: user.username,
     displayName: user.global_name ?? null,
     discriminator: user.discriminator && user.discriminator !== "0" ? user.discriminator : null,
     avatarUrl: discordAvatarUrl(user.id, user.avatar),
+    avatarHash: user.avatar ?? null,
+    avatarAnimated,
     bannerUrl: discordBannerUrl(user.id, user.banner),
+    bannerHash: user.banner ?? null,
+    bannerAnimated,
     accentColor: user.accent_color ?? null,
-    badges: discordBadges(user.public_flags),
+    badges: resolveBadges({
+      publicFlags: user.public_flags,
+      premiumType: user.premium_type,
+      premiumSince: user.premium_since,
+    }),
     bot: Boolean(user.bot),
     system: Boolean(user.system),
-    accountCreatedAt: discordAccountCreatedAt(user.id),
+    isDefaultAvatar: !user.avatar,
+    nitroLikely,
+    publicFlagsRaw: user.public_flags ?? 0,
+    accountCreatedAt,
+    accountAgeDays: Math.max(0, Math.floor((Date.now() - new Date(accountCreatedAt).getTime()) / 86_400_000)),
+    flairs: computeFlairs(accountCreatedAt, avatarAnimated || bannerAnimated),
+    snowflake: discordSnowflakeParts(user.id),
     firstSeenAt: timestamps.firstSeenAt,
     lastSeenAt: timestamps.lastSeenAt,
     primaryGuild,
     avatarDecorationUrl: user.avatar_decoration_data?.asset
       ? `https://cdn.discordapp.com/avatar-decoration-presets/${user.avatar_decoration_data.asset}.png?size=240`
       : null,
+    avatarDecorationAsset: user.avatar_decoration_data?.asset ?? null,
+    avatarDecorationSkuId: user.avatar_decoration_data?.sku_id ?? null,
+    avatarDecorationExpiresAt: decorationExpiry(user.avatar_decoration_data?.expires_at),
+    collectibles: user.collectibles ?? null,
+    nameplate,
+    nitro: {
+      active: user.premium_type != null && user.premium_type > 0 ? true : user.premium_type === 0 ? false : null,
+      type:
+        user.premium_type === 1 ? "Nitro Classic" :
+        user.premium_type === 2 ? "Nitro" :
+        user.premium_type === 3 ? "Nitro Basic" : null,
+      since: user.premium_since ?? null,
+    },
+    booster: { active: null, since: null },
   };
 }
 

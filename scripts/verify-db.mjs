@@ -25,6 +25,10 @@ for (const name of [
   '0006_lock_down_direct_writes.sql',
   '0007_performance_queries.sql',
   '0008_discord_lookup.sql',
+  '0009_external_discord_history.sql',
+  '0010_discord_history_observations.sql',
+  '0011_discord_history_privacy.sql',
+  '0012_discord_premium_fields.sql',
 ]) {
   await client.query(
     'insert into public.disme_schema_migrations(name) values($1) on conflict do nothing',
@@ -42,6 +46,8 @@ const { rows } = await client.query(`
     (select count(*) from public.gifts)::int gifts,
     (select count(*) from public.discord_users)::int discord_users,
     (select count(*) from public.discord_identity_history)::int discord_history,
+    (select count(*) from public.external_discord_history)::int external_discord_history,
+    (select count(*) from public.discord_history_observations)::int discord_history_observations,
     (select count(*) from pg_policies where schemaname='public')::int policies
 `);
 const functions = await client.query(`
