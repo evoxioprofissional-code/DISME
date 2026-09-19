@@ -36,7 +36,8 @@ Estado atualizado em 19/09/2026. Build de produção e `tsc` limpos; branch
 - **Nitro real / bio / conexões de terceiros**: não dá sem self-bot.
 
 ## Pendências sugeridas (para o Codex)
-- (opcional) Trocar "Provável Nitro" → "Nitro" quando há nameplate/enfeite (são exclusivos de Nitro). Onde: `src/lib/discord.ts` (`nitroLikely`) + chip em `src/components/discord/DiscordLookup.tsx`.
-- Menu "Mais opções" do perfil (Bloquear/Denunciar/Ocultar) ainda é no-op — falta ação real.
-- Toggles de privacidade/notificações em Configurações são locais (não persistem) — falta gravar no perfil.
+- [FEITO] "Provável Nitro" → "Nitro" quando há recurso exclusivo (`nitroConfirmed` em `src/lib/discord.ts` + chip em `DiscordLookup.tsx`).
+- [FEITO] Toggle "Ocultar perfil" persiste em `profiles.is_hidden` (`setProfileHidden`); edição de perfil reflete o mesmo.
+- Menu "Mais opções" do perfil (Bloquear/Denunciar) ainda é no-op — precisa de tabelas novas (`blocks`, `reports`) via migration + ações. (Não apliquei: o sandbox do Claude bloqueia rodar migrations/gravações de PII; rode `node scripts/migrate.mjs`.)
+- Demais toggles de Configurações (Aparecer em Descobrir, Mostrar online, só matches, notificações) ainda são locais — faltam colunas no `profiles` (migration) + gravação.
 - Extra por-servidor (apelido/cargos/boost) só se o bot estiver no mesmo servidor do alvo (não pra qualquer ID).
