@@ -74,6 +74,7 @@ export interface User {
   isCrush?: boolean;
   liked?: boolean;
   onboarded?: boolean;
+  isHidden?: boolean;
 }
 
 export interface Gift {

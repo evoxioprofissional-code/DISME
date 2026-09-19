@@ -54,6 +54,7 @@ export interface DiscordPublicUser {
   bannerAnimated: boolean;
   isDefaultAvatar: boolean;
   nitroLikely: boolean;
+  nitroConfirmed: boolean;
   publicFlagsRaw: number;
   accountAgeDays: number;
   flairs: string[];

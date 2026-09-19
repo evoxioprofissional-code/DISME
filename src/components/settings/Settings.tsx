@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
-import { signOut, upsertConnection, removeConnection } from "@/lib/actions";
+import { signOut, upsertConnection, removeConnection, setProfileHidden } from "@/lib/actions";
 
 type Platform = "steam" | "spotify" | "riot" | "twitch";
 
@@ -164,11 +164,13 @@ function ConnectionRow({
 export function Settings({
   email,
   connections,
+  initialHidden = false,
 }: {
   email: string;
   connections: Partial<Record<Platform, string>>;
+  initialHidden?: boolean;
 }) {
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(initialHidden);
   const [discover, setDiscover] = useState(true);
   const [online, setOnline] = useState(true);
   const [onlyMatches, setOnlyMatches] = useState(true);
@@ -187,7 +189,20 @@ export function Settings({
       </Group>
 
       <Group title="Privacidade" icon={<Lock className="size-3.5" />}>
-        <Row label="Ocultar perfil" hint="Ninguém encontra você em Descobrir" right={<Switch checked={hidden} onChange={setHidden} label="Ocultar perfil" />} />
+        <Row
+          label="Ocultar perfil"
+          hint="Ninguém encontra você em Descobrir"
+          right={
+            <Switch
+              checked={hidden}
+              onChange={(v) => {
+                setHidden(v);
+                void setProfileHidden(v);
+              }}
+              label="Ocultar perfil"
+            />
+          }
+        />
         <Row label="Aparecer em Descobrir" right={<Switch checked={discover} onChange={setDiscover} label="Aparecer em Descobrir" />} />
         <Row label="Mostrar status online" right={<Switch checked={online} onChange={setOnline} label="Mostrar status online" />} />
       </Group>

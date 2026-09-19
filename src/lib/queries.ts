@@ -46,6 +46,7 @@ export function mapProfile(r: any): User {
     },
     flexRank: r.flex_rank ?? undefined,
     onboarded: r.onboarded ?? false,
+    isHidden: r.is_hidden ?? false,
   };
 }
 const mapBadge = (b: any): Badge => ({ id: b.id, label: b.label, icon: b.icon, rarity: b.rarity ?? undefined });
@@ -56,7 +57,7 @@ const mapConnection = (c: any): SocialConnection => ({
 });
 
 const PROFILE_COLS =
-  "id,username,display_name,age,pronouns,location,bio,avatar_url,banner_url,presence,gender,intent,relationship,partner_id,games,interests,flex,gifts_received,gifts_sent,matches_count,followers_count,collection_count,onboarded";
+  "id,username,display_name,age,pronouns,location,bio,avatar_url,banner_url,presence,gender,intent,relationship,partner_id,games,interests,flex,gifts_received,gifts_sent,matches_count,followers_count,collection_count,onboarded,is_hidden";
 
 // -------- session / me --------
 const getAuthUser = cache(async () => {

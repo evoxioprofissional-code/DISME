@@ -191,6 +191,16 @@ export async function toggleFollow(toId: string): Promise<{ following: boolean }
   return { following: true };
 }
 
+// -------- privacy --------
+export async function setProfileHidden(hidden: boolean): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const id = await meId();
+  const { error } = await supabase.from("profiles").update({ is_hidden: hidden }).eq("id", id);
+  if (error) return { ok: false };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 // -------- connections --------
 export async function upsertConnection(
   platform: "steam" | "spotify" | "riot" | "twitch" | "discord",

@@ -243,9 +243,9 @@ function LookupResult({
                   <Sparkles className="size-4 text-brand" /> {user.nitro.type ?? "Nitro"}
                 </span>
               ) : (
-                user.nitroLikely && (
-                  <span title="Indícios de Nitro: avatar/banner animado, enfeite de avatar ou nameplate." className={chipClass}>
-                    <Sparkles className="size-4 text-brand" /> Provável Nitro
+                user.nitroConfirmed && (
+                  <span title="Recursos exclusivos de Nitro detectados (enfeite, nameplate ou avatar/banner animado)." className={chipClass}>
+                    <Sparkles className="size-4 text-brand" /> Nitro
                   </span>
                 )
               )}

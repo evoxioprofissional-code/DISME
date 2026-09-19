@@ -61,7 +61,7 @@ export function ProfileEditForm({ user }: { user: User }) {
   const [intent, setIntent] = useState<Intent>(user.intent);
   const [gameIds, setGameIds] = useState<string[]>(user.games);
   const [interests, setInterests] = useState<string[]>(user.interests);
-  const [hidden, setHidden] = useState(false);
+  const [hidden, setHidden] = useState(user.isHidden ?? false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 

@@ -122,12 +122,15 @@ export function normalizeDiscordUser(
   const bannerAnimated = Boolean(user.banner?.startsWith("a_"));
   const nameplate = resolveNameplate(user.collectibles);
   const hasDecoration = Boolean(user.avatar_decoration_data?.asset);
-  const nitroLikely =
+  // Enfeite, nameplate e avatar/banner animado são recursos exclusivos de Nitro,
+  // então a presença deles confirma Nitro (não é só "provável").
+  const nitroConfirmed =
     (user.premium_type != null && user.premium_type > 0) ||
     avatarAnimated ||
     bannerAnimated ||
     hasDecoration ||
     Boolean(nameplate);
+  const nitroLikely = nitroConfirmed;
 
   return {
     id: user.id,
@@ -150,6 +153,7 @@ export function normalizeDiscordUser(
     system: Boolean(user.system),
     isDefaultAvatar: !user.avatar,
     nitroLikely,
+    nitroConfirmed,
     publicFlagsRaw: user.public_flags ?? 0,
     accountCreatedAt,
     accountAgeDays: Math.max(0, Math.floor((Date.now() - new Date(accountCreatedAt).getTime()) / 86_400_000)),
