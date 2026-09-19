@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, ScanSearch } from "lucide-react";
 import { formatCompact } from "@/lib/utils";
 import { type NavUser, type NavBadges } from "@/lib/nav";
 import { Wordmark } from "@/components/brand/Wordmark";
@@ -12,6 +12,13 @@ export function TopBar({ me, badges }: { me: NavUser; badges: NavBadges }) {
         <Wordmark priority className="!h-6" />
       </Link>
       <div className="flex items-center gap-2">
+        <Link
+          href="/discord"
+          aria-label="Consultar usuário do Discord"
+          className="flex size-9 items-center justify-center rounded-full bg-surface-2 text-text-secondary transition-colors hover:text-text"
+        >
+          <ScanSearch className="size-[18px]" />
+        </Link>
         <Link href="/flex" className="flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5">
           <span className="tnum text-sm font-bold text-brand">{formatCompact(me.flex)}</span>
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted">Flex</span>
