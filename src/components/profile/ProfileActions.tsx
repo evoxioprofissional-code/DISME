@@ -14,7 +14,9 @@ import {
   Pencil,
   Share2,
 } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { RelationshipModal } from "@/components/relationship/RelationshipModal";
 
 export function ProfileActions({
   isSelf,
@@ -29,6 +31,7 @@ export function ProfileActions({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [relRequested, setRelRequested] = useState(false);
+  const [relModal, setRelModal] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,6 +63,7 @@ export function ProfileActions({
   }
 
   return (
+    <>
     <div className="flex items-center gap-2">
       <Link
         href={`/gifts?to=${username}`}
@@ -77,7 +81,7 @@ export function ProfileActions({
       </Link>
       {canRelationship && (
         <button
-          onClick={() => setRelRequested((v) => !v)}
+          onClick={() => (relRequested ? setRelRequested(false) : setRelModal(true))}
           aria-pressed={relRequested}
           className={cn(
             "flex size-11 items-center justify-center rounded-full transition-colors",
@@ -115,6 +119,20 @@ export function ProfileActions({
         )}
       </div>
     </div>
+
+    <AnimatePresence>
+      {relModal && (
+        <RelationshipModal
+          displayName={displayName}
+          onClose={() => setRelModal(false)}
+          onSend={() => {
+            setRelRequested(true);
+            setRelModal(false);
+          }}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
