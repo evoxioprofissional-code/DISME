@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+  DisMe — Design System
+  Dark-first social product. Graphite base, off-white type,
+  periwinkle brand used strategically. No decorative glow / gradients / glass.
+*/
+
+@theme {
+  /* ---- Surfaces (graphite scale) ---- */
+  --color-bg: #0a0a0d;
+  --color-surface: #101014;
+  --color-surface-2: #16161c;
+  --color-surface-3: #1c1c23;
+  --color-hover: #1f1f27;
+  --color-border: #23232b;
+  --color-border-strong: #313139;
+
+  /* ---- Text ---- */
+  --color-text: #f4f4f6;
+  --color-text-secondary: #a6a6b2;
+  --color-muted: #6b6b78;
+
+  /* ---- Brand (periwinkle from the DisMe wordmark) ---- */
+  --color-brand: #7c6cf0;
+  --color-brand-hover: #8d7ff4;
+  --color-brand-active: #6a58e6;
+  --color-brand-tint: #16141f;
+  --color-on-brand: #ffffff;
+
+  /* ---- Semantic ---- */
+  --color-danger: #e5484d;
+  --color-danger-tint: #1f1315;
+  --color-success: #35c88a;
+  --color-gold: #d9a441;
+  --color-online: #35c88a;
+
+  /* ---- Rarity (gifts / collectibles) ---- */
+  --color-rarity-common: #8b8b96;
+  --color-rarity-rare: #4c8dff;
+  --color-rarity-epic: #a06bff;
+  --color-rarity-legendary: #e5a13a;
+  --color-rarity-limited: #ff5c87;
+
+  /* ---- Radius ---- */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  /* ---- Typography ---- */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-geist), ui-monospace, monospace;
+
+  /* ---- Shadows (discreet) ---- */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 20px 48px -16px rgb(0 0 0 / 0.6);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Numeric displays (Flex, rankings, stats) use tabular figures */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Focus ring — visible, consistent, keyboard-only */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbars — quiet */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+  border: 3px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d3d47;
+}
+
+/* Utility: hide scrollbar for horizontal scrollers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

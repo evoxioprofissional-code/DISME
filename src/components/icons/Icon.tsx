@@ -1,0 +1,56 @@
+import {
+  Flame,
+  BadgeCheck,
+  Gem,
+  Crown,
+  HeartHandshake,
+  TrendingUp,
+  Sparkle,
+  Shield,
+  VenetianMask,
+  Clover,
+  Gift,
+  Swords,
+  Target,
+  HandHeart,
+  MessageCircleHeart,
+  Gamepad2,
+  Music,
+  Tv,
+  MessageSquare,
+  Heart,
+  Users,
+  MessageCircle,
+  HelpCircle,
+  type LucideIcon,
+} from "lucide-react";
+
+const map: Record<string, LucideIcon> = {
+  flame: Flame,
+  "badge-check": BadgeCheck,
+  gem: Gem,
+  crown: Crown,
+  "heart-handshake": HeartHandshake,
+  "trending-up": TrendingUp,
+  sparkle: Sparkle,
+  shield: Shield,
+  "venetian-mask": VenetianMask,
+  clover: Clover,
+  gift: Gift,
+  swords: Swords,
+  target: Target,
+  "hand-heart": HandHeart,
+  "message-circle-heart": MessageCircleHeart,
+  "gamepad-2": Gamepad2,
+  music: Music,
+  tv: Tv,
+  "message-square": MessageSquare,
+  heart: Heart,
+  users: Users,
+  "message-circle": MessageCircle,
+};
+
+export function Icon({ name, className }: { name: string; className?: string }) {
+  const Cmp = map[name] ?? HelpCircle;
+  return <Cmp className={className} />;
+}
