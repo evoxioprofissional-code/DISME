@@ -25,12 +25,14 @@ export default async function ProfilePage({
   const user = await getProfileByUsername(username);
   if (!user) notFound();
 
-  const currentUserId = await getSessionUserId();
+  const [currentUserId, coupleData, collection] = await Promise.all([
+    getSessionUserId(),
+    getCoupleByUser(user.id),
+    getCollection(user.id, 8),
+  ]);
   const isSelf = user.id === currentUserId;
-  const coupleData = await getCoupleByUser(user.id);
   const couple = coupleData?.couple;
   const partner = coupleData ? (coupleData.a.id === user.id ? coupleData.b : coupleData.a) : undefined;
-  const collection = await getCollection(user.id, 8);
   const canRelationship = !isSelf && user.relationship === "solteiro";
 
   const stats = [

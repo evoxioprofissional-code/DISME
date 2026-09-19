@@ -23,6 +23,7 @@ for (const name of [
   '0004_secure_operations.sql',
   '0005_privacy_and_conversations.sql',
   '0006_lock_down_direct_writes.sql',
+  '0007_performance_queries.sql',
 ]) {
   await client.query(
     'insert into public.disme_schema_migrations(name) values($1) on conflict do nothing',
@@ -43,7 +44,7 @@ const { rows } = await client.query(`
 const functions = await client.query(`
   select proname from pg_proc
   where pronamespace='public'::regnamespace
-    and proname in ('like_profile','send_gift','start_conversation','request_relationship','accept_relationship_request','send_chat_message')
+    and proname in ('like_profile','send_gift','start_conversation','request_relationship','accept_relationship_request','send_chat_message','get_nav_counts','get_conversation_summaries')
   order by 1
 `);
 console.log(JSON.stringify({

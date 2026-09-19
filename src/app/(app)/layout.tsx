@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { getShellData, isOnboarded } from "@/lib/queries";
+import { getShellData } from "@/lib/queries";
 import type { NavUser } from "@/lib/nav";
 
 export default async function AppGroupLayout({
@@ -10,7 +10,7 @@ export default async function AppGroupLayout({
 }) {
   const shell = await getShellData();
   if (!shell.me) redirect("/login");
-  if (!(await isOnboarded())) redirect("/onboarding");
+  if (!shell.onboarded) redirect("/onboarding");
 
   const me: NavUser = {
     username: shell.me.username,

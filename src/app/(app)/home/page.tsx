@@ -1,4 +1,4 @@
-import { listFeed, listSuggestions, listBattles, getRankings, getSessionUserId } from "@/lib/queries";
+import { listFeed, listSuggestions, listBattles, getFlexTop, getSessionUserId } from "@/lib/queries";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -7,16 +7,12 @@ import { MiniRanking, BattleTeaser, SuggestionsRail } from "@/components/home/wi
 
 export default async function HomePage() {
   const meId = (await getSessionUserId())!;
-  const [feed, suggestions, battles, rankings] = await Promise.all([
+  const [feed, suggestions, battles, flexTop] = await Promise.all([
     listFeed(),
     listSuggestions(meId),
     listBattles(),
-    getRankings(),
+    getFlexTop(5),
   ]);
-
-  const flexTop = rankings.flex
-    .filter((e) => e.user)
-    .map((e) => ({ rank: e.entry.rank, user: e.user!, value: e.entry.value }));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 lg:py-8">

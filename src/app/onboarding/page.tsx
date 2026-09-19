@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { getSessionUserId, isOnboarded } from "@/lib/queries";
+import { getMyProfile } from "@/lib/queries";
 import { Onboarding } from "@/components/onboarding/Onboarding";
 
 export default async function OnboardingPage() {
-  const uid = await getSessionUserId();
-  if (!uid) redirect("/login");
-  if (await isOnboarded()) redirect("/home");
+  const profile = await getMyProfile();
+  if (!profile) redirect("/login");
+  if (profile.onboarded) redirect("/home");
   return <Onboarding />;
 }

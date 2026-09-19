@@ -73,6 +73,7 @@ export interface User {
   flexRank?: number;
   isCrush?: boolean;
   liked?: boolean;
+  onboarded?: boolean;
 }
 
 export interface Gift {

@@ -23,10 +23,11 @@ export default async function CouplePage({
   const { couple, a, b } = data;
 
   const unlocked = couple.achievements.filter((x) => x.unlockedAt).length;
-  const collection = [
-    ...(await getCollection(a.id, 4)),
-    ...(await getCollection(b.id, 4)),
-  ].slice(0, 8);
+  const [collectionA, collectionB] = await Promise.all([
+    getCollection(a.id, 4),
+    getCollection(b.id, 4),
+  ]);
+  const collection = [...collectionA, ...collectionB].slice(0, 8);
 
   const stats = [
     { label: "Juntos há", value: pluralDays(couple.streakDays) },

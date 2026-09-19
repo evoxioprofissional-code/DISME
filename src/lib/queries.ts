@@ -11,6 +11,7 @@ import type {
 } from "@/types";
 import { createClient } from "@/lib/supabase/server";
 import { getGift } from "@/data/gifts";
+import { cache } from "react";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -44,6 +45,7 @@ export function mapProfile(r: any): User {
       collectionCount: r.collection_count ?? 0,
     },
     flexRank: r.flex_rank ?? undefined,
+    onboarded: r.onboarded ?? false,
   };
 }
 const mapBadge = (b: any): Badge => ({ id: b.id, label: b.label, icon: b.icon, rarity: b.rarity ?? undefined });
@@ -54,22 +56,25 @@ const mapConnection = (c: any): SocialConnection => ({
 });
 
 const PROFILE_COLS =
-  "id,username,display_name,age,pronouns,location,bio,avatar_url,banner_url,presence,gender,intent,relationship,partner_id,games,interests,flex,gifts_received,gifts_sent,matches_count,followers_count,collection_count";
+  "id,username,display_name,age,pronouns,location,bio,avatar_url,banner_url,presence,gender,intent,relationship,partner_id,games,interests,flex,gifts_received,gifts_sent,matches_count,followers_count,collection_count,onboarded";
 
 // -------- session / me --------
-export async function getSessionUserId(): Promise<string | null> {
+const getAuthUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user?.id ?? null;
-}
+  return user;
+});
 
-export async function getMyProfile(): Promise<User | null> {
+export const getSessionUserId = cache(async (): Promise<string | null> => {
+  const user = await getAuthUser();
+  return user?.id ?? null;
+});
+
+export const getMyProfile = cache(async (): Promise<User | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
   const { data } = await supabase
     .from("profiles")
@@ -77,27 +82,15 @@ export async function getMyProfile(): Promise<User | null> {
     .eq("id", user.id)
     .maybeSingle();
   if (!data) return null;
-  const me = mapProfile(data);
-  me.flexRank = await flexRankOf(user.id);
-  return me;
-}
+  return mapProfile(data);
+});
 
 export async function getMyCredits(): Promise<number> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return 0;
   const { data } = await supabase.from("profiles").select("credits").eq("id", user.id).maybeSingle();
   return data?.credits ?? 0;
-}
-
-export async function isOnboarded(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data } = await supabase.from("profiles").select("onboarded").eq("id", user.id).maybeSingle();
-  return !!data?.onboarded;
 }
 
 async function flexRankOf(id: string): Promise<number | undefined> {
@@ -111,37 +104,26 @@ export interface ShellData {
   unreadMessages: number;
   unreadNotifs: number;
   newMatches: number;
+  onboarded: boolean;
 }
 
-export async function getShellData(): Promise<ShellData> {
+export const getShellData = cache(async (): Promise<ShellData> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { me: null, unreadMessages: 0, unreadNotifs: 0, newMatches: 0 };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(PROFILE_COLS)
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const [{ count: unreadNotifs }, { count: unreadMessages }] = await Promise.all([
-    supabase.from("notifications").select("*", { count: "exact", head: true }).eq("read", false),
-    supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("read", false)
-      .neq("sender_id", user.id),
-  ]);
+  const me = await getMyProfile();
+  if (!me) {
+    return { me: null, unreadMessages: 0, unreadNotifs: 0, newMatches: 0, onboarded: false };
+  }
+  const { data } = await supabase.rpc("get_nav_counts");
+  const counts = (data ?? {}) as { messages?: number; notifications?: number };
 
   return {
-    me: profile ? mapProfile(profile) : null,
-    unreadMessages: unreadMessages ?? 0,
-    unreadNotifs: unreadNotifs ?? 0,
+    me,
+    unreadMessages: Number(counts.messages ?? 0),
+    unreadNotifs: Number(counts.notifications ?? 0),
     newMatches: 0,
+    onboarded: Boolean(me.onboarded),
   };
-}
+});
 
 // -------- profiles --------
 export async function getProfileByUsername(username: string): Promise<User | null> {
@@ -209,7 +191,7 @@ export async function listFeed(limit = 20): Promise<FeedItemData[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("feed_activities")
-    .select("id,owner_id,gift_id,from_id,serial,received_at")
+    .select("id,type,actors,gift_id,meta,created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
   const rows = data ?? [];
@@ -237,26 +219,32 @@ async function profilesByIds(ids: string[]): Promise<Map<string, User>> {
 }
 
 // -------- rankings --------
-export async function getRankings(): Promise<
+export const getRankings = cache(async (): Promise<
   Record<RankingCategory, { entry: RankingEntry; user?: User; couple?: CoupleLite }[]>
-> {
+> => {
   const supabase = await createClient();
-  const board = async (col: string) => {
-    const { data } = await supabase
+  const [{ data }, couples] = await Promise.all([
+    supabase
       .from("profiles")
       .select(PROFILE_COLS)
       .eq("is_hidden", false)
-      .order(col, { ascending: false })
-      .limit(20);
-    return (data ?? []).map((r: any, i: number) => ({
+      .eq("onboarded", true)
+      .limit(200),
+    listCouples(),
+  ]);
+  const rows = data ?? [];
+  const board = (col: string) =>
+    [...rows]
+      .sort((a: any, b: any) => (b[col] ?? 0) - (a[col] ?? 0))
+      .slice(0, 20)
+      .map((r: any, i: number) => ({
       entry: { rank: i + 1, userId: r.id, value: r[col] ?? 0 } as RankingEntry,
       user: mapProfile(r),
     }));
-  };
-  const couplesBoard = async (col: "streak_days" | "gifts_exchanged") => {
-    const couples = await listCouples();
-    return couples
+  const couplesBoard = (col: "streak_days" | "gifts_exchanged") =>
+    [...couples]
       .sort((a, b) => (b.couple as any)[col === "streak_days" ? "streakDays" : "giftsExchanged"] - (a.couple as any)[col === "streak_days" ? "streakDays" : "giftsExchanged"])
+      .slice(0, 20)
       .map((c, i) => ({
         entry: {
           rank: i + 1,
@@ -265,15 +253,28 @@ export async function getRankings(): Promise<
         } as RankingEntry,
         couple: { id: c.couple.id, a: c.a, b: c.b } as CoupleLite,
       }));
-  };
-  const [flex, presenteados, colecionadores, casais, streaks] = await Promise.all([
-    board("flex"),
-    board("gifts_received"),
-    board("collection_count"),
-    couplesBoard("gifts_exchanged"),
-    couplesBoard("streak_days"),
-  ]);
+  const flex = board("flex");
+  const presenteados = board("gifts_received");
+  const colecionadores = board("collection_count");
+  const casais = couplesBoard("gifts_exchanged");
+  const streaks = couplesBoard("streak_days");
   return { flex, presenteados, colecionadores, casais, streaks };
+});
+
+export async function getFlexTop(limit = 10) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select(PROFILE_COLS)
+    .eq("is_hidden", false)
+    .eq("onboarded", true)
+    .order("flex", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((row: any, index: number) => ({
+    rank: index + 1,
+    user: mapProfile(row),
+    value: row.flex ?? 0,
+  }));
 }
 
 export interface CoupleLite {
@@ -319,33 +320,24 @@ export interface ConversationData {
   unread: number;
 }
 export async function listConversations(meId: string): Promise<ConversationData[]> {
+  void meId;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("conversations")
-    .select("*, messages(id,body,gift_id,sender_id,read,created_at)")
-    .or(`user_a.eq.${meId},user_b.eq.${meId}`)
-    .order("updated_at", { ascending: false });
+  const { data } = await supabase.rpc("get_conversation_summaries");
   const rows = data ?? [];
-  const otherIds = rows.map((r: any) => (r.user_a === meId ? r.user_b : r.user_a));
+  const otherIds = rows.map((r: any) => r.other_id);
   const profiles = await profilesByIds(otherIds);
   return rows
     .map((r: any) => {
-      const otherId = r.user_a === meId ? r.user_b : r.user_a;
-      const other = profiles.get(otherId);
+      const other = profiles.get(r.other_id);
       if (!other) return null;
-      const msgs = (r.messages ?? []).sort(
-        (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      );
-      const last = msgs[msgs.length - 1];
-      const unread = msgs.filter((m: any) => !m.read && m.sender_id !== meId).length;
       return {
         id: r.id,
         other,
-        lastBody: last?.body ?? undefined,
-        lastGiftId: last?.gift_id ?? undefined,
-        lastSenderId: last?.sender_id,
+        lastBody: r.last_body ?? undefined,
+        lastGiftId: r.last_gift_id ?? undefined,
+        lastSenderId: r.last_sender_id ?? undefined,
         updatedAt: r.updated_at,
-        unread,
+        unread: Number(r.unread ?? 0),
       };
     })
     .filter(Boolean) as ConversationData[];
@@ -455,7 +447,7 @@ function mapCouple(r: any): Couple {
       : undefined,
   };
 }
-export async function listCouples(): Promise<CoupleData[]> {
+export const listCouples = cache(async (): Promise<CoupleData[]> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("couples")
@@ -472,7 +464,7 @@ export async function listCouples(): Promise<CoupleData[]> {
       return { couple: mapCouple(r), a, b };
     })
     .filter(Boolean) as CoupleData[];
-}
+});
 export async function getCoupleByUser(userId: string): Promise<CoupleData | null> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -515,7 +507,7 @@ export async function getCollection(userId: string, limit = 24): Promise<OwnedGi
   const supabase = await createClient();
   const { data } = await supabase
     .from("owned_gifts")
-    .select("*")
+    .select("id,owner_id,gift_id,from_id,serial,received_at")
     .eq("owner_id", userId)
     .order("received_at", { ascending: false })
     .limit(limit);

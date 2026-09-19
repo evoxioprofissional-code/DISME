@@ -1,5 +1,5 @@
 import { ArrowUp, Gift, HandHeart, Trophy, Layers, Activity } from "lucide-react";
-import { getMyProfile, listBattles, getRankings } from "@/lib/queries";
+import { getMyProfile, listBattles, getFlexTop } from "@/lib/queries";
 import { formatNumber } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -11,7 +11,7 @@ import { MiniRanking } from "@/components/home/widgets";
 
 export default async function FlexPage() {
   const me = (await getMyProfile())!;
-  const [battles, rankings] = await Promise.all([listBattles(), getRankings()]);
+  const [battles, flexTop] = await Promise.all([listBattles(), getFlexTop(10)]);
   const flex = me.stats.flex;
 
   const series = [0.9, 0.925, 0.945, 0.962, 0.978, 0.99, 1].map((f) => Math.round(flex * f));
@@ -26,9 +26,7 @@ export default async function FlexPage() {
   ].map((b) => ({ ...b, value: Math.round(flex * b.frac) }));
   const maxBd = Math.max(1, ...breakdown.map((b) => b.value));
 
-  const flexTop = rankings.flex
-    .filter((e) => e.user)
-    .map((e) => ({ rank: e.entry.rank, user: e.user!, value: e.entry.value }));
+  const myRank = flexTop.find((entry) => entry.user.id === me.id)?.rank;
 
   return (
     <PageContainer>
@@ -36,9 +34,9 @@ export default async function FlexPage() {
         <p className="text-xs font-bold uppercase tracking-wide text-muted">Meu Flex</p>
         <p className="tnum mt-1 text-5xl font-extrabold leading-none text-brand">{formatNumber(flex)}</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {me.flexRank && (
+          {myRank && (
             <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-semibold text-text">
-              #{me.flexRank} no ranking global
+              #{myRank} no ranking global
             </span>
           )}
           {weeklyGain > 0 && (
