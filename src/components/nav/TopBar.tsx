@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, ScanSearch, LogIn } from "lucide-react";
+import { Bell, ScanSearch, LogIn, Store } from "lucide-react";
 import { formatCompact } from "@/lib/utils";
 import { type NavUser, type NavBadges } from "@/lib/nav";
 import { Wordmark } from "@/components/brand/Wordmark";
@@ -12,6 +12,13 @@ export function TopBar({ me, badges }: { me: NavUser | null; badges: NavBadges }
         <Wordmark priority className="!h-6" />
       </Link>
       <div className="flex items-center gap-2">
+        <Link
+          href="/marketplace"
+          aria-label="Marketplace"
+          className="flex size-9 items-center justify-center rounded-full bg-surface-2 text-text-secondary transition-colors hover:text-text"
+        >
+          <Store className="size-[18px]" />
+        </Link>
         <Link
           href="/discord"
           aria-label="Consultar usuário do Discord"

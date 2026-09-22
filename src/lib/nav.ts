@@ -8,6 +8,7 @@ import {
   Trophy,
   HeartHandshake,
   ScanSearch,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import type { PresenceState } from "@/types";
@@ -39,6 +40,7 @@ export const primaryNav: NavItem[] = [
   { href: "/home", label: "Início", icon: Home },
   { href: "/discover", label: "Descobrir", icon: Compass },
   { href: "/discord", label: "Consulta Discord", icon: ScanSearch },
+  { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/matches", label: "Matches", icon: Zap, badgeKey: "matches" },
   { href: "/messages", label: "Mensagens", icon: MessageCircle, badgeKey: "messages" },
   { href: "/flex", label: "Flex", icon: TrendingUp },

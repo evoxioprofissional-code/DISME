@@ -16,7 +16,6 @@ import {
   X,
 } from "lucide-react";
 import { connectionMeta } from "@/lib/labels";
-import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";

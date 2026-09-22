@@ -1,6 +1,6 @@
 # DisMe — ponto de continuação (handoff)
 
-Estado atualizado em 19/09/2026. Build de produção e `tsc` limpos; branch
+Estado atualizado em 22/09/2026. Build de produção e `tsc` limpos; branch
 `main` sincronizada com o GitHub.
 
 ## Ambiente
@@ -13,7 +13,7 @@ Estado atualizado em 19/09/2026. Build de produção e `tsc` limpos; branch
   set "PGUSER=postgres.ytvewdrxquglzvssljza"
   node scripts/migrate.mjs
   ```
-- Migrations 0001–0013 **já aplicadas** (inclui bucket `discord-history` p/ arquivo de avatares).
+- Migrations 0001–0015 **já aplicadas** (inclui buckets `discord-history`, `profile-media` e `marketplace-media`).
 - Segredos só em `.env.local` (gitignored): anon, service_role, `DISCORD_BOT_TOKEN`. **Recomendo rotacionar** (passaram pelo chat). Opcional: `OATHNET_API_KEY`, `NAMEDC_API_TOKEN`.
 - Produção: `https://www.disme.cloud`.
 - Para preparar outro computador, siga `SETUP_NOTEBOOK.md`.
@@ -29,6 +29,12 @@ Estado atualizado em 19/09/2026. Build de produção e `tsc` limpos; branch
 6. **Upload real de avatar**: onboarding e edição de perfil aceitam JPG, PNG,
    WebP e GIF de até 4 MB. A rota `/api/profile/avatar` cria e usa o bucket
    público `profile-media` com credenciais server-only.
+7. **Marketplace + Exposições**: `/marketplace` separa anúncios comerciais de
+   uma vitrine de contas. Anúncios aceitam itens, serviços, periféricos e
+   colecionáveis; o acordo ocorre diretamente no Discord, sem pagamento no
+   DisMe. Contas só podem usar o modo `showcase`: sem preço, compra, troca,
+   transferência ou CTA comercial. A restrição também existe no banco. Inclui
+   até 5 imagens, busca, categorias, favoritos, denúncia e página detalhada.
 
 ## Limites honestos já explicados ao dono
 - **Badges "coloridas" (Nitro, Boost, Quest, Orbs, tag)**: NÃO vêm no `public_flags` da API de bot. Só via endpoint de profile (token de usuário/self-bot = proibido, ToS) ou API de terceiro. As de `public_flags` (Staff/HypeSquad/Bug Hunter/Early Supporter/Active Developer) já funcionam.
