@@ -13,7 +13,7 @@ Estado atualizado em 22/09/2026. Build de produção e `tsc` limpos; branch
   set "PGUSER=postgres.ytvewdrxquglzvssljza"
   node scripts/migrate.mjs
   ```
-- Migrations 0001–0016 **já aplicadas** (inclui buckets `discord-history`, `profile-media`, `marketplace-media` e `store-media`).
+- Migrations 0001–0017 **já aplicadas** (inclui buckets `discord-history`, `profile-media`, `marketplace-media` e `store-media`).
 - Segredos só em `.env.local` (gitignored): anon, service_role, `DISCORD_BOT_TOKEN`. **Recomendo rotacionar** (passaram pelo chat). Opcional: `OATHNET_API_KEY`, `NAMEDC_API_TOKEN`.
 - Produção: `https://www.disme.cloud`.
 - Para preparar outro computador, siga `SETUP_NOTEBOOK.md`.
@@ -42,6 +42,13 @@ Estado atualizado em 22/09/2026. Build de produção e `tsc` limpos; branch
    A loja também aparece no perfil público.
 9. **Capa de perfil**: `/profile/edit` agora envia e salva capa real no bucket
    `profile-media`, além do avatar já existente.
+10. **Diretório de servidores**: donos podem anunciar servidores na aba
+    `Servidores` do Marketplace. O bot precisa estar no servidor; o backend
+    compara o `owner_id` oficial da guilda ao Discord ID verificado do perfil.
+    Importa nome, ícone, banner, descrição, totais de membros/online, boosts,
+    nível, canais, cargos, emojis, idioma e features. Não coleta a lista
+    individual de membros. Há sincronização, edição, ocultação e exclusão em
+    `/servers/manage`, e os anúncios aparecem no perfil do dono.
 
 ## Limites honestos já explicados ao dono
 - **Badges "coloridas" (Nitro, Boost, Quest, Orbs, tag)**: NÃO vêm no `public_flags` da API de bot. Só via endpoint de profile (token de usuário/self-bot = proibido, ToS) ou API de terceiro. As de `public_flags` (Staff/HypeSquad/Bug Hunter/Early Supporter/Active Developer) já funcionam.

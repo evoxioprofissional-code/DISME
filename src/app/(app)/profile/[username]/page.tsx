@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ChevronRight, Camera, Store as StoreIcon } from "lucide-react";
+import { MapPin, ChevronRight, Camera, Store as StoreIcon, Radio } from "lucide-react";
 import { getGame } from "@/data";
 import { getCollection, getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
 import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
@@ -16,6 +16,7 @@ import { Icon } from "@/components/icons/Icon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { presenceLabel } from "@/components/ui/PresenceDot";
 import { getStoreByOwner } from "@/lib/marketplace";
+import { listDiscordServersByOwner } from "@/lib/server-directory";
 
 export default async function ProfilePage({
   params,
@@ -26,11 +27,12 @@ export default async function ProfilePage({
   const user = await getProfileByUsername(username);
   if (!user) notFound();
 
-  const [currentUserId, coupleData, collection, store] = await Promise.all([
+  const [currentUserId, coupleData, collection, store, servers] = await Promise.all([
     getSessionUserId(),
     getCoupleByUser(user.id),
     getCollection(user.id, 8),
     getStoreByOwner(user.id),
+    listDiscordServersByOwner(user.id),
   ]);
   const isSelf = user.id === currentUserId;
   const couple = coupleData?.couple;
@@ -231,6 +233,19 @@ export default async function ProfilePage({
               <Link href={store ? `/store/${store.slug}` : "/store/new"} className="mt-4 flex h-10 w-full items-center justify-center rounded-full border border-border-strong text-sm font-bold text-text transition-colors hover:bg-surface-2">
                 {store ? "Visitar loja" : "Criar minha loja"}
               </Link>
+            </Card>
+          )}
+          {(servers.length > 0 || isSelf) && (
+            <Card className="p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-surface-2 text-text-secondary"><Radio className="size-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted">Servidores</p>
+                  <p className="mt-1 text-sm font-extrabold text-text">{servers.length ? `${servers.length} ${servers.length === 1 ? "servidor anunciado" : "servidores anunciados"}` : "Anuncie seu servidor"}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">Dados verificados pela API oficial do Discord.</p>
+                </div>
+              </div>
+              <Link href={servers[0] ? `/server/${servers[0].id}` : "/servers/new"} className="mt-4 flex h-10 w-full items-center justify-center rounded-full border border-border-strong text-sm font-bold text-text transition-colors hover:bg-surface-2">{servers[0] ? "Ver servidor" : "Anunciar servidor"}</Link>
             </Card>
           )}
           <Card className="p-5">
