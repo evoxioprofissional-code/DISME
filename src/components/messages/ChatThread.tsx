@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Gift, ImageIcon, Send } from "lucide-react";
+import { ChevronLeft, Gift, ImageIcon, LoaderCircle, Send } from "lucide-react";
 import type { Conversation, Message, User } from "@/types";
 import { getGift } from "@/data";
-import { sendMessage } from "@/lib/actions";
+import { markConversationRead, sendMessage } from "@/lib/actions";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/Avatar";
 import { GiftGlyph } from "@/components/gifts/GiftGlyph";
@@ -64,6 +65,8 @@ export function ChatThread({
 }) {
   const [messages, setMessages] = useState<Message[]>(conversation.messages);
   const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -71,13 +74,72 @@ export function ChatThread({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages]);
 
+  useEffect(() => {
+    void markConversationRead(conversation.id);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`conversation:${conversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            id: string;
+            sender_id: string;
+            body: string | null;
+            gift_id: string | null;
+            read: boolean;
+            created_at: string;
+          };
+          const incoming: Message = {
+            id: row.id,
+            senderId: row.sender_id,
+            body: row.body ?? undefined,
+            giftId: row.gift_id ?? undefined,
+            read: row.read,
+            createdAt: row.created_at,
+          };
+
+          setMessages((items) => {
+            if (items.some((item) => item.id === incoming.id)) return items;
+            const optimistic = items.findIndex(
+              (item) =>
+                item.id.startsWith("local-") &&
+                item.senderId === incoming.senderId &&
+                item.body === incoming.body,
+            );
+            if (optimistic === -1) return [...items, incoming];
+            const next = [...items];
+            next[optimistic] = incoming;
+            return next;
+          });
+
+          if (row.sender_id !== meId) void markConversationRead(conversation.id);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [conversation.id, meId]);
+
   async function send() {
     const body = draft.trim();
-    if (!body) return;
+    if (!body || sending) return;
+    const optimisticId = `local-${Date.now()}`;
+    setSending(true);
+    setError("");
     setMessages((m) => [
       ...m,
       {
-        id: `local-${Date.now()}`,
+        id: optimisticId,
         senderId: meId,
         body,
         createdAt: new Date().toISOString(),
@@ -87,9 +149,15 @@ export function ChatThread({
     setDraft("");
     const result = await sendMessage({ conversationId: conversation.id, body });
     if (!result.ok) {
-      setMessages((items) => items.filter((item) => !item.id.startsWith("local-")));
+      setMessages((items) => items.filter((item) => item.id !== optimisticId));
       setDraft(body);
+      setError("Não foi possível enviar. Tente novamente.");
+    } else if (result.messageId) {
+      setMessages((items) =>
+        items.map((item) => (item.id === optimisticId ? { ...item, id: result.messageId! } : item)),
+      );
     }
+    setSending(false);
   }
 
   return (
@@ -116,6 +184,14 @@ export function ChatThread({
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {messages.length === 0 && (
+          <div className="mx-auto flex h-full max-w-xs flex-col items-center justify-center text-center">
+            <p className="font-bold text-text">Vocês deram match</p>
+            <p className="mt-1 text-sm text-text-secondary">
+              Comece a conversa com {other.displayName}.
+            </p>
+          </div>
+        )}
         {messages.map((m) => (
           <Bubble key={m.id} message={m} mine={m.senderId === meId} />
         ))}
@@ -124,6 +200,7 @@ export function ChatThread({
 
       {/* Input */}
       <div className="shrink-0 border-t border-border bg-surface px-3 py-2.5">
+        {error && <p className="mb-2 px-2 text-xs font-medium text-danger" role="alert">{error}</p>}
         <div className="flex items-center gap-2">
           <Link
             href={`/gifts?to=${other.username}`}
@@ -152,11 +229,11 @@ export function ChatThread({
           />
           <button
             onClick={send}
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || sending}
             aria-label="Enviar"
             className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand transition-colors hover:bg-brand-hover disabled:opacity-40"
           >
-            <Send className="size-5" />
+            {sending ? <LoaderCircle className="size-5 animate-spin" /> : <Send className="size-5" />}
           </button>
         </div>
       </div>

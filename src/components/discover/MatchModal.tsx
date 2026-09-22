@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { X } from "lucide-react";
 import type { User } from "@/types";
 import { CrushIcon } from "@/components/icons/Crush";
+import { StartConversationButton } from "@/components/messages/StartConversationButton";
 
 export function MatchModal({
   me,
@@ -75,12 +76,11 @@ export function MatchModal({
         </p>
 
         <div className="mt-6 space-y-2.5">
-          <Link
-            href="/messages"
+          <StartConversationButton
+            otherId={user.id}
+            showIcon={false}
             className="flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
-          >
-            Conversar
-          </Link>
+          />
           <div className="flex gap-2.5">
             <Link
               href={`/profile/${user.username}`}

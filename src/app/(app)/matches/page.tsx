@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import { PageContainer } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -9,6 +8,7 @@ import { CrushIcon } from "@/components/icons/Crush";
 import { buttonClasses } from "@/components/ui/Button";
 import { LoginCta } from "@/components/auth/LoginCta";
 import { listMatches, getSessionUserId, type MatchData } from "@/lib/queries";
+import { StartConversationButton } from "@/components/messages/StartConversationButton";
 
 function MatchCard({ match }: { match: MatchData }) {
   const u = match.user;
@@ -43,13 +43,10 @@ function MatchCard({ match }: { match: MatchData }) {
         </div>
       </Link>
       <div className="p-2">
-        <Link
-          href="/messages"
+        <StartConversationButton
+          otherId={u.id}
           className={buttonClasses({ variant: "secondary", size: "sm", className: "w-full" })}
-        >
-          <MessageCircle className="size-4" />
-          Conversar
-        </Link>
+        />
       </div>
     </div>
   );

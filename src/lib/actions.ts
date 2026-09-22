@@ -126,12 +126,24 @@ export async function sendGift(
 }
 
 // -------- messages --------
-async function ensureConversation(meIdVal: string, otherId: string): Promise<string> {
-  void meIdVal;
+async function ensureConversation(otherId: string): Promise<string> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("start_conversation", { target: otherId });
   if (error || !data) throw new Error(error?.message ?? "conversation unavailable");
   return data;
+}
+
+export async function startConversation(
+  otherId: string,
+): Promise<{ ok: boolean; conversationId?: string; error?: string }> {
+  try {
+    await meId();
+    const conversationId = await ensureConversation(otherId);
+    revalidatePath("/messages");
+    return { ok: true, conversationId };
+  } catch {
+    return { ok: false, error: "Não foi possível abrir esta conversa." };
+  }
 }
 
 export async function sendMessage(input: {
@@ -139,21 +151,30 @@ export async function sendMessage(input: {
   toId?: string;
   body?: string;
   giftId?: string;
-}): Promise<{ ok: boolean; conversationId?: string; error?: string }> {
-  const id = await meId();
+}): Promise<{ ok: boolean; conversationId?: string; messageId?: string; error?: string }> {
+  await meId();
   let convId = input.conversationId;
-  if (!convId && input.toId) convId = await ensureConversation(id, input.toId);
+  if (!convId && input.toId) convId = await ensureConversation(input.toId);
   if (!convId) return { ok: false, error: "Conversa inválida" };
   if (input.giftId) return { ok: false, error: "Envie presentes pela loja." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("send_chat_message", {
+  const { data, error } = await supabase.rpc("send_chat_message", {
     chat_id: convId,
     message_body: input.body || "",
   });
   if (error) return { ok: false, error: error.message };
+  revalidatePath("/messages");
   revalidatePath(`/messages/${convId}`);
-  return { ok: true, conversationId: convId };
+  return { ok: true, conversationId: convId, messageId: data ?? undefined };
+}
+
+export async function markConversationRead(conversationId: string): Promise<void> {
+  await meId();
+  const supabase = await createClient();
+  await supabase.rpc("mark_conversation_read", { chat_id: conversationId });
+  revalidatePath("/", "layout");
+  revalidatePath("/messages");
 }
 
 // -------- relationship --------

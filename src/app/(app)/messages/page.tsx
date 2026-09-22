@@ -28,7 +28,15 @@ export default async function MessagesPage() {
     <PageContainer>
       <PageHeader title="Mensagens" subtitle="Suas conversas com quem deu match" />
       {sorted.length === 0 ? (
-        <EmptyState title="Nenhuma conversa" description="Quando você conversar com um match, ela aparece aqui." />
+        <EmptyState
+          title="Nenhuma conversa"
+          description="Seus matches aparecem aqui prontos para começar uma conversa."
+          action={
+            <Link href="/matches" className="text-sm font-bold text-brand hover:text-brand-hover">
+              Ver matches
+            </Link>
+          }
+        />
       ) : (
       <Card className="divide-y divide-border overflow-hidden">
         {sorted.map((c) => {
