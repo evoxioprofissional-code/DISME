@@ -63,8 +63,20 @@ function render(n: NotifData, myUsername: string): { text: React.ReactNode; href
       };
     case "relationship":
       return { text: <>{name} pediu você em relacionamento.</>, href: profileHref };
-    case "message":
-      return { text: <>{name} te enviou uma mensagem.</>, href: "/messages" };
+    case "message": {
+      const conversationId =
+        typeof n.meta?.conversation_id === "string" ? n.meta.conversation_id : null;
+      const preview = typeof n.meta?.preview === "string" ? n.meta.preview : null;
+      return {
+        text: (
+          <>
+            {name} te enviou uma mensagem
+            {preview && <span className="text-text">: “{preview}”</span>}.
+          </>
+        ),
+        href: conversationId ? `/messages/${conversationId}` : "/messages",
+      };
+    }
     default:
       return { text: <>Você recebeu uma nova notificação.</>, href: "/home" };
   }

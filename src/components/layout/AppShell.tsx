@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/nav/Sidebar";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { TopBar } from "@/components/nav/TopBar";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { MessageNotificationToast } from "@/components/notifications/MessageNotificationToast";
 import type { NavUser, NavBadges } from "@/lib/nav";
 
 export function AppShell({
@@ -24,6 +25,7 @@ export function AppShell({
           </main>
         </div>
         <BottomNav me={me} badges={badges} />
+        {me && <MessageNotificationToast userId={me.id} />}
       </div>
     </AuthProvider>
   );

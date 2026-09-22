@@ -15,6 +15,7 @@ export default async function AppGroupLayout({
 
   const me: NavUser | null = shell.me
     ? {
+        id: shell.me.id,
         username: shell.me.username,
         displayName: shell.me.displayName,
         avatar: shell.me.avatar,

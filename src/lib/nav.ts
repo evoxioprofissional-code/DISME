@@ -23,6 +23,7 @@ export interface NavItem {
 
 /** Serializable current-user info for client nav components. */
 export interface NavUser {
+  id: string;
   username: string;
   displayName: string;
   avatar: string;

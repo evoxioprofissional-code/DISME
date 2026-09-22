@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Gift, ImageIcon, LoaderCircle, Send } from "lucide-react";
+import { ChevronLeft, Gift, LoaderCircle, Send } from "lucide-react";
 import type { Conversation, Message, User } from "@/types";
 import { getGift } from "@/data";
 import { markConversationRead, sendMessage } from "@/lib/actions";
@@ -209,12 +209,6 @@ export function ChatThread({
           >
             <Gift className="size-5" />
           </Link>
-          <button
-            aria-label="Enviar imagem"
-            className="hidden size-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2 sm:flex"
-          >
-            <ImageIcon className="size-5" />
-          </button>
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
