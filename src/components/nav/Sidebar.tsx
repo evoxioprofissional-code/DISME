@@ -18,7 +18,7 @@ export function Sidebar({ me, badges }: { me: NavUser | null; badges: NavBadges 
   return (
     <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-surface px-3 py-5 lg:flex xl:w-[264px]">
       <Link href="/home" className="mb-6 flex items-center px-3" aria-label="DisMe — Início">
-        <Wordmark priority />
+        <Wordmark priority className="-my-5 !h-20" />
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
