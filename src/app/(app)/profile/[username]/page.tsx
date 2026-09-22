@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight, Camera } from "lucide-react";
 import { getGame } from "@/data";
 import { getCollection, getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
 import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
@@ -63,14 +63,26 @@ export default async function ProfilePage({
         <div className="relative px-4 pb-5 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="-mt-12 flex items-end gap-4 sm:-mt-14">
-              <Avatar
-                src={user.avatar}
-                name={user.displayName}
-                size="2xl"
-                presence={user.presence}
-                rounded="xl"
-                className="rounded-2xl ring-4 ring-surface"
-              />
+              <div className="relative shrink-0">
+                <Avatar
+                  src={user.avatar}
+                  name={user.displayName}
+                  size="2xl"
+                  presence={user.presence}
+                  rounded="xl"
+                  className="rounded-2xl ring-4 ring-surface"
+                />
+                {isSelf && (
+                  <Link
+                    href="/profile/edit#foto"
+                    aria-label={user.avatar ? "Trocar foto de perfil" : "Adicionar foto de perfil"}
+                    title={user.avatar ? "Trocar foto de perfil" : "Adicionar foto de perfil"}
+                    className="absolute -bottom-2 -right-2 flex size-10 items-center justify-center rounded-full bg-brand text-on-brand ring-4 ring-surface transition-colors hover:bg-brand-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  >
+                    <Camera className="size-[18px]" />
+                  </Link>
+                )}
+              </div>
               <div className="pb-1">
                 <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
                   {user.displayName}

@@ -70,16 +70,21 @@ export function AvatarUploader({
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
         </span>
       </button>
-      {prominent && (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="text-sm font-semibold text-brand hover:text-brand-hover disabled:opacity-60"
-        >
-          {uploading ? "Enviando foto..." : value ? "Trocar foto" : "Adicionar foto"}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className={cn(
+          "text-sm font-semibold text-brand hover:text-brand-hover disabled:opacity-60",
+          !prominent && "mt-1",
+        )}
+      >
+        {uploading
+          ? "Enviando foto..."
+          : value
+            ? "Trocar foto de perfil"
+            : "Adicionar foto de perfil"}
+      </button>
       {error && <p role="alert" className={cn("text-xs font-medium text-danger", prominent && "text-center")}>{error}</p>}
     </div>
   );

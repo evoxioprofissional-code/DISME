@@ -78,7 +78,7 @@ export function ProfileEditForm({ user }: { user: User }) {
       </Link>
 
       {/* Photo + banner */}
-      <div className="mb-6 overflow-hidden rounded-3xl border border-border bg-surface">
+      <div id="foto" className="mb-6 scroll-mt-20 overflow-hidden rounded-3xl border border-border bg-surface">
         <div className="relative h-32 bg-surface-2">
           {user.banner && (
             <Image src={user.banner} alt="" fill sizes="640px" className="object-cover opacity-80" />
@@ -92,7 +92,7 @@ export function ProfileEditForm({ user }: { user: User }) {
           <div className="-mt-10 mb-1">
             <AvatarUploader value={avatar} name={displayName} onUploaded={setAvatar} />
           </div>
-          <p className="mt-3 text-xs text-muted">Clique na foto para trocar. JPG, PNG, WebP ou GIF de até 4 MB.</p>
+          <p className="mt-2 text-xs text-muted">JPG, PNG, WebP ou GIF de até 4 MB.</p>
         </div>
       </div>
 
