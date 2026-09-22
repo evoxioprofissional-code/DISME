@@ -119,7 +119,26 @@ export const gifts: Gift[] = [
   },
 ];
 
-const giftMap = new Map(gifts.map((g) => [g.id, g]));
+const PRESENTATION: Record<string, Pick<Gift, "name" | "description" | "asset" | "displayCategory" | "featured">> = {
+  rosa: { name: "Heartbroken", description: "acontece.", asset: "/presentes/coração.png", displayCategory: "romance", featured: true },
+  carta: { name: "e-kitten", description: "certified.", asset: "/presentes/gato.png", displayCategory: "aura", featured: true },
+  ursinho: { name: "Aura", description: "+ aura.", asset: "/presentes/estrelas.png", displayCategory: "aura", featured: true },
+  cafe: { name: "Lighter", description: "acende aí.", asset: "/presentes/isqueiro.png", displayCategory: "larp", featured: true },
+  controle: { name: "Lean", description: "purple.", asset: "/presentes/lean.png", displayCategory: "gaming", featured: true },
+  alianca: { name: "Masked", description: "ninguém precisa saber.", asset: "/presentes/mascara.png", displayCategory: "larp", featured: true },
+  coroa: { name: "Void", description: "sumiu.", asset: "/presentes/lua-negra.png", displayCategory: "colecionáveis", featured: true },
+  galaxia: { name: "Dragon", description: "final boss.", asset: "/presentes/dragão.png", displayCategory: "gaming", featured: true },
+};
+
+export function decorateGift(gift: Gift): Gift {
+  return { ...gift, ...PRESENTATION[gift.id] };
+}
+
+export function giftHasAsset(gift: Gift) {
+  return Boolean(gift.asset);
+}
+
+const giftMap = new Map(gifts.map((g) => [g.id, decorateGift(g)]));
 
 export function getGift(id: string): Gift | undefined {
   return giftMap.get(id);

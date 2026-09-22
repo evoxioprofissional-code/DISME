@@ -90,6 +90,9 @@ export interface Gift {
   description: string;
   /** flex value granted */
   flexValue: number;
+  asset?: string;
+  displayCategory?: "em alta" | "larp" | "aura" | "gaming" | "romance" | "colecionáveis" | "limitados";
+  featured?: boolean;
 }
 
 export type GiftCategory =

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Coins } from "lucide-react";
-import type { Gift, GiftCategory, User } from "@/types";
+import type { Gift, User } from "@/types";
 import { cn, formatNumber } from "@/lib/utils";
 import { GiftGlyph } from "./GiftGlyph";
 import { RarityTag } from "@/components/ui/RarityTag";
@@ -11,13 +11,15 @@ import { SendGiftModal } from "./SendGiftModal";
 import { GiftRevealModal } from "./GiftRevealModal";
 import { useAuthGate } from "@/components/auth/AuthProvider";
 
-const CATS: { key: GiftCategory | "todos"; label: string }[] = [
+type DisplayCategory = NonNullable<Gift["displayCategory"]>;
+
+const CATS: { key: DisplayCategory | "todos"; label: string }[] = [
   { key: "todos", label: "Todos" },
-  { key: "populares", label: "Populares" },
-  { key: "romanticos", label: "Românticos" },
-  { key: "raros", label: "Raros" },
-  { key: "colecionaveis", label: "Colecionáveis" },
-  { key: "limitados", label: "Limitados" },
+  { key: "em alta", label: "Em alta" },
+  { key: "larp", label: "Larp" },
+  { key: "aura", label: "Aura" },
+  { key: "gaming", label: "Gaming" },
+  { key: "colecionáveis", label: "Colecionáveis" },
 ];
 
 function GiftCard({ gift, onSelect }: { gift: Gift; onSelect: () => void }) {
@@ -26,12 +28,13 @@ function GiftCard({ gift, onSelect }: { gift: Gift; onSelect: () => void }) {
   return (
     <button
       onClick={onSelect}
-      className="group flex flex-col rounded-2xl border border-border bg-surface p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-2"
+      className="group flex flex-col rounded-2xl border border-border bg-surface p-3 text-left transition-[transform,border-color,background-color] duration-150 hover:-translate-y-1 hover:border-border-strong hover:bg-surface-2"
     >
       <GiftGlyph giftId={gift.id} rarity={gift.rarity} className="mb-3 aspect-square w-full" />
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-sm font-bold text-text">{gift.name}</p>
       </div>
+      <p className="mt-1 min-h-8 text-xs leading-relaxed text-text-secondary">{gift.description}</p>
       <div className="mt-1"><RarityTag rarity={gift.rarity} /></div>
       {gift.supply && (
         <div className="mt-2.5">
@@ -53,12 +56,17 @@ function GiftCard({ gift, onSelect }: { gift: Gift; onSelect: () => void }) {
 
 export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: Gift[]; credits: number; candidates: User[]; presetUser?: User }) {
   const { requireAuth } = useAuthGate();
-  const [cat, setCat] = useState<GiftCategory | "todos">("todos");
+  const [cat, setCat] = useState<DisplayCategory | "todos">("todos");
   const [selected, setSelected] = useState<Gift | null>(null);
   const [sent, setSent] = useState<{ gift: Gift; recipient: User } | null>(null);
 
   const list = useMemo(
-    () => (cat === "todos" ? gifts : gifts.filter((g) => g.category === cat)),
+    () => {
+      const available = gifts.filter((gift) => gift.asset);
+      if (cat === "todos") return available;
+      if (cat === "em alta") return available.filter((gift) => gift.featured);
+      return available.filter((gift) => gift.displayCategory === cat);
+    },
     [cat, gifts],
   );
 
@@ -106,6 +114,11 @@ export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: G
           <GiftCard key={g.id} gift={g} onSelect={() => requireAuth(() => setSelected(g))} />
         ))}
       </div>
+      {list.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border-strong bg-surface/50 px-5 py-10 text-center text-sm text-text-secondary">
+          Ainda não tem nada nessa categoria.
+        </div>
+      )}
 
       <AnimatePresence>
         {selected && (

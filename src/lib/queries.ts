@@ -10,7 +10,7 @@ import type {
   RankingEntry,
 } from "@/types";
 import { createClient } from "@/lib/supabase/server";
-import { getGift } from "@/data/gifts";
+import { decorateGift, getGift } from "@/data/gifts";
 import { cache } from "react";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -177,7 +177,7 @@ export async function listSuggestions(meId: string | null, limit = 5): Promise<U
 export async function listGiftCatalog(): Promise<Gift[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("gifts").select("*").order("price", { ascending: true });
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row: any) => decorateGift({
     id: row.id,
     name: row.name,
     rarity: row.rarity,

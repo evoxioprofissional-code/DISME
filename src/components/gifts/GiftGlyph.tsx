@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { Rarity } from "@/types";
-import { rarityColorVar } from "@/data/gifts";
+import { getGift, rarityColorVar } from "@/data/gifts";
+import Image from "next/image";
 
 /**
  * Hand-drawn gift marks. Each gift renders as a bespoke line illustration
@@ -139,14 +140,18 @@ export function GiftGlyph({
   return (
     <span
       className={cn(
-        "flex items-center justify-center overflow-hidden rounded-xl bg-surface-2 ring-1 ring-inset ring-border",
+        "relative flex items-center justify-center overflow-hidden rounded-xl bg-surface-2 ring-1 ring-inset ring-border",
         className,
       )}
       style={{ color: rarityColorVar[rarity] }}
     >
-      <svg viewBox="0 0 64 64" className="size-[64%]" aria-hidden>
-        <Glyph id={giftId} />
-      </svg>
+      {getGift(giftId)?.asset ? (
+        <Image src={getGift(giftId)!.asset!} alt="" fill sizes="(max-width: 640px) 42vw, 220px" className="object-contain p-3 transition-transform duration-150 group-hover:scale-[1.03]" />
+      ) : (
+        <svg viewBox="0 0 64 64" className="size-[64%]" aria-hidden>
+          <Glyph id={giftId} />
+        </svg>
+      )}
     </span>
   );
 }
