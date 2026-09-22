@@ -14,7 +14,7 @@ export default async function ProfileEditPage() {
       ) : (
         <LoginCta
           title="Entre para editar seu perfil"
-          description="Crie sua conta pra personalizar foto, bio, jogos e interesses."
+          description="Crie sua conta para personalizar foto, capa, bio, jogos e interesses."
         />
       )}
     </PageContainer>

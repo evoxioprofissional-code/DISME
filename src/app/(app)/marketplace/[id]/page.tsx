@@ -85,10 +85,10 @@ export default async function MarketplaceListingPage({ params, searchParams }: {
           </Card>
 
           <Card className="p-5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted">Publicado por</span>
-            <Link href={`/profile/${listing.seller.username}`} className="mt-3 flex items-center gap-3 rounded-xl p-2 -mx-2 transition-colors hover:bg-surface-2">
-              <Avatar src={listing.seller.avatar} name={listing.seller.displayName} size="md" />
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-extrabold text-text">{listing.seller.displayName}</span><span className="block truncate text-xs text-text-secondary">@{listing.seller.username}</span></span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted">Publicado na loja</span>
+            <Link href={`/store/${listing.store.slug}`} className="mt-3 flex items-center gap-3 rounded-xl p-2 -mx-2 transition-colors hover:bg-surface-2">
+              <Avatar src={listing.store.avatar || listing.seller.avatar} name={listing.store.name} size="md" rounded="xl" />
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-extrabold text-text">{listing.store.name}</span><span className="block truncate text-xs text-text-secondary">por @{listing.seller.username}</span></span>
               <span className="text-sm text-muted">›</span>
             </Link>
             <p className="mt-3 text-xs text-muted">Publicado em {longDate(listing.createdAt)}</p>

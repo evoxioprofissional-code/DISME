@@ -11,7 +11,7 @@ function formatPrice(cents?: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
-export function ListingCard({ listing }: { listing: MarketplaceListing }) {
+export function ListingCard({ listing, priority = false }: { listing: MarketplaceListing; priority?: boolean }) {
   const showcase = listing.kind === "showcase";
   return (
     <Link
@@ -24,6 +24,7 @@ export function ListingCard({ listing }: { listing: MarketplaceListing }) {
             src={listing.images[0]}
             alt=""
             fill
+            priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
@@ -50,8 +51,8 @@ export function ListingCard({ listing }: { listing: MarketplaceListing }) {
         </div>
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
           <span className="flex min-w-0 items-center gap-2">
-            <Avatar src={listing.seller.avatar} name={listing.seller.displayName} size="xs" />
-            <span className="truncate text-xs font-semibold text-text-secondary">@{listing.seller.username}</span>
+            <Avatar src={listing.store.avatar || listing.seller.avatar} name={listing.store.name} size="xs" rounded="xl" />
+            <span className="truncate text-xs font-semibold text-text-secondary">{listing.store.name}</span>
           </span>
           <span className="shrink-0 text-right">
             {showcase ? (

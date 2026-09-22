@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Camera, Check, ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
 import type { Intent, User } from "@/types";
 import { games as allGames } from "@/data";
 import { intentMeta, connectionMeta } from "@/lib/labels";
@@ -12,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { BannerUploader } from "@/components/profile/BannerUploader";
 import { updateProfile } from "@/lib/actions";
 
 const INTEREST_POOL = [
@@ -53,6 +53,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function ProfileEditForm({ user }: { user: User }) {
   const [avatar, setAvatar] = useState(user.avatar);
+  const [banner, setBanner] = useState(user.banner);
   const [displayName, setDisplayName] = useState(user.displayName);
   const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio);
@@ -78,18 +79,10 @@ export function ProfileEditForm({ user }: { user: User }) {
       </Link>
 
       {/* Photo + banner */}
-      <div id="foto" className="mb-6 scroll-mt-20 overflow-hidden rounded-3xl border border-border bg-surface">
-        <div className="relative h-32 bg-surface-2">
-          {user.banner && (
-            <Image src={user.banner} alt="" fill sizes="640px" className="object-cover opacity-80" />
-          )}
-          <button className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
-            <Camera className="size-4" />
-            Capa
-          </button>
-        </div>
+      <div className="mb-6 scroll-mt-20 overflow-hidden rounded-3xl border border-border bg-surface">
+        <div id="capa" className="scroll-mt-20"><BannerUploader value={banner} onUploaded={setBanner} /></div>
         <div className="px-5 pb-5">
-          <div className="-mt-10 mb-1">
+          <div id="foto" className="-mt-10 mb-1 scroll-mt-20">
             <AvatarUploader value={avatar} name={displayName} onUploaded={setAvatar} />
           </div>
           <p className="mt-2 text-xs text-muted">JPG, PNG, WebP ou GIF de até 4 MB.</p>

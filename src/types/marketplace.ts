@@ -11,9 +11,29 @@ export interface MarketplaceSeller {
   discordId?: string;
 }
 
+export interface MarketplaceStoreSummary {
+  id: string;
+  slug: string;
+  name: string;
+  avatar?: string;
+  banner?: string;
+}
+
+export interface MarketplaceStore extends MarketplaceStoreSummary {
+  ownerId: string;
+  description: string;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  owner: MarketplaceSeller;
+  productCount: number;
+  showcaseCount: number;
+}
+
 export interface MarketplaceListing {
   id: string;
   sellerId: string;
+  storeId: string;
   kind: MarketplaceListingKind;
   category: MarketplaceCategory;
   title: string;
@@ -28,6 +48,7 @@ export interface MarketplaceListing {
   createdAt: string;
   updatedAt: string;
   seller: MarketplaceSeller;
+  store: MarketplaceStoreSummary;
   favorite?: boolean;
 }
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ChevronRight, Camera } from "lucide-react";
+import { MapPin, ChevronRight, Camera, Store as StoreIcon } from "lucide-react";
 import { getGame } from "@/data";
 import { getCollection, getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
 import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
@@ -15,6 +15,7 @@ import { GiftGlyph } from "@/components/gifts/GiftGlyph";
 import { Icon } from "@/components/icons/Icon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { presenceLabel } from "@/components/ui/PresenceDot";
+import { getStoreByOwner } from "@/lib/marketplace";
 
 export default async function ProfilePage({
   params,
@@ -25,10 +26,11 @@ export default async function ProfilePage({
   const user = await getProfileByUsername(username);
   if (!user) notFound();
 
-  const [currentUserId, coupleData, collection] = await Promise.all([
+  const [currentUserId, coupleData, collection, store] = await Promise.all([
     getSessionUserId(),
     getCoupleByUser(user.id),
     getCollection(user.id, 8),
+    getStoreByOwner(user.id),
   ]);
   const isSelf = user.id === currentUserId;
   const couple = coupleData?.couple;
@@ -58,6 +60,11 @@ export default async function ProfilePage({
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-surface/80 to-transparent sm:from-surface" />
+          {isSelf && (
+            <Link href="/profile/edit#capa" className="absolute right-4 top-4 flex h-9 items-center gap-2 rounded-full bg-[#0a0a0de6] px-3.5 text-xs font-bold text-white">
+              <Camera className="size-4" /> {user.banner ? "Trocar capa" : "Adicionar capa"}
+            </Link>
+          )}
         </div>
 
         <div className="relative px-4 pb-5 sm:px-6">
@@ -211,6 +218,21 @@ export default async function ProfilePage({
 
         {/* Aside */}
         <aside className="space-y-4">
+          {(store || isSelf) && (
+            <Card className="p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-brand-tint text-brand"><StoreIcon className="size-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted">Loja</p>
+                  <p className="mt-1 truncate text-sm font-extrabold text-text">{store?.name ?? "Crie sua loja"}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">{store ? "Produtos e exposições deste perfil." : "Publique produtos em um espaço próprio."}</p>
+                </div>
+              </div>
+              <Link href={store ? `/store/${store.slug}` : "/store/new"} className="mt-4 flex h-10 w-full items-center justify-center rounded-full border border-border-strong text-sm font-bold text-text transition-colors hover:bg-surface-2">
+                {store ? "Visitar loja" : "Criar minha loja"}
+              </Link>
+            </Card>
+          )}
           <Card className="p-5">
             <p className="text-xs font-bold uppercase tracking-wide text-muted">Flex</p>
             <p className="tnum mt-0.5 text-3xl font-extrabold text-brand">

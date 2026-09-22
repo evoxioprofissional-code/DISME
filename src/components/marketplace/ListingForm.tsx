@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useActionState, useRef, useState } from "react";
 import { Camera, Loader2, ShieldCheck, Store, X } from "lucide-react";
-import { createMarketplaceListing, type MarketplaceFormState } from "@/lib/marketplace-actions";
+import { createMarketplaceListing, updateMarketplaceListing, type MarketplaceFormState } from "@/lib/marketplace-actions";
+import type { MarketplaceListing } from "@/types/marketplace";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -12,13 +13,14 @@ const initialState: MarketplaceFormState = {};
 const inputClass = "h-11 w-full rounded-xl border border-border-strong bg-bg px-3.5 text-sm text-text placeholder:text-muted focus:border-brand focus:outline-none";
 const labelClass = "mb-2 block text-sm font-bold text-text";
 
-export function ListingForm({ initialKind = "market" }: { initialKind?: "market" | "showcase" }) {
-  const [kind, setKind] = useState<"market" | "showcase">(initialKind);
-  const [images, setImages] = useState<string[]>([]);
+export function ListingForm({ initialKind = "market", listing }: { initialKind?: "market" | "showcase"; listing?: MarketplaceListing }) {
+  const editing = Boolean(listing);
+  const [kind, setKind] = useState<"market" | "showcase">(listing?.kind ?? initialKind);
+  const [images, setImages] = useState<string[]>(listing?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-  const [state, action, pending] = useActionState(createMarketplaceListing, initialState);
+  const [state, action, pending] = useActionState(editing ? updateMarketplaceListing : createMarketplaceListing, initialState);
 
   async function upload(files: FileList | null) {
     if (!files?.length || uploading) return;
@@ -48,6 +50,7 @@ export function ListingForm({ initialKind = "market" }: { initialKind?: "market"
     <form action={action} className="space-y-6">
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="images" value={JSON.stringify(images)} />
+      {listing && <input type="hidden" name="listing_id" value={listing.id} />}
 
       <fieldset>
         <legend className={labelClass}>Tipo de publicação</legend>
@@ -105,12 +108,12 @@ export function ListingForm({ initialKind = "market" }: { initialKind?: "market"
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="sm:col-span-2">
           <span className={labelClass}>Título</span>
-          <input name="title" required minLength={4} maxLength={80} className={inputClass} placeholder={kind === "showcase" ? "Conta antiga com badge rara" : "O que você está anunciando?"} />
+          <input name="title" required minLength={4} maxLength={80} defaultValue={listing?.title} className={inputClass} placeholder={kind === "showcase" ? "Conta antiga com badge rara" : "O que você está anunciando?"} />
         </label>
         {kind === "market" && (
           <label>
             <span className={labelClass}>Categoria</span>
-            <select name="category" required className={inputClass} defaultValue="item">
+            <select name="category" required className={inputClass} defaultValue={listing?.category !== "account_showcase" ? listing?.category : "item"}>
               <option value="item">Itens digitais</option>
               <option value="service">Serviços</option>
               <option value="peripheral">Periféricos</option>
@@ -120,30 +123,30 @@ export function ListingForm({ initialKind = "market" }: { initialKind?: "market"
         )}
         <label>
           <span className={labelClass}>Plataforma</span>
-          <input name="platform" maxLength={40} className={inputClass} placeholder="Discord, Steam, Riot..." />
+          <input name="platform" maxLength={40} defaultValue={listing?.platform} className={inputClass} placeholder="Discord, Steam, Riot..." />
         </label>
         {kind === "market" && (
           <label>
             <span className={labelClass}>Valor</span>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">R$</span>
-              <input name="price" required inputMode="decimal" className={`${inputClass} pl-10`} placeholder="0,00" />
+              <input name="price" required inputMode="decimal" defaultValue={listing?.priceCents !== undefined ? (listing.priceCents / 100).toFixed(2).replace(".", ",") : undefined} className={`${inputClass} pl-10`} placeholder="0,00" />
             </div>
           </label>
         )}
         {kind === "market" && (
           <label className="sm:col-span-2">
             <span className={labelClass}>Como o item ou serviço é entregue?</span>
-            <input name="transfer_method" maxLength={120} className={inputClass} placeholder="Descreva a forma de entrega sem compartilhar credenciais" />
+            <input name="transfer_method" maxLength={120} defaultValue={listing?.transferMethod} className={inputClass} placeholder="Descreva a forma de entrega sem compartilhar credenciais" />
           </label>
         )}
         <label className="sm:col-span-2">
           <span className={labelClass}>{kind === "showcase" ? "História e características" : "Descrição"}</span>
-          <textarea name="description" required minLength={20} maxLength={1600} rows={7} className="w-full resize-y rounded-xl border border-border-strong bg-bg px-3.5 py-3 text-sm leading-6 text-text placeholder:text-muted focus:border-brand focus:outline-none" placeholder={kind === "showcase" ? "Conte quando a conta foi criada, o que ela tem de especial e por que você decidiu exibi-la." : "Inclua estado, detalhes, condições e tudo que o interessado precisa saber."} />
+          <textarea name="description" required minLength={20} maxLength={1600} rows={7} defaultValue={listing?.description} className="w-full resize-y rounded-xl border border-border-strong bg-bg px-3.5 py-3 text-sm leading-6 text-text placeholder:text-muted focus:border-brand focus:outline-none" placeholder={kind === "showcase" ? "Conte quando a conta foi criada, o que ela tem de especial e por que você decidiu exibi-la." : "Inclua estado, detalhes, condições e tudo que o interessado precisa saber."} />
         </label>
         <label className="sm:col-span-2">
           <span className={labelClass}>Tags <span className="font-normal text-muted">(separadas por vírgula)</span></span>
-          <input name="tags" maxLength={240} className={inputClass} placeholder="raro, edição limitada, coleção" />
+          <input name="tags" maxLength={240} defaultValue={listing?.tags.join(", ")} className={inputClass} placeholder="raro, edição limitada, coleção" />
         </label>
       </div>
 
@@ -152,7 +155,7 @@ export function ListingForm({ initialKind = "market" }: { initialKind?: "market"
         <p className="max-w-md text-xs leading-5 text-muted">O DisMe não processa pagamentos. Nunca compartilhe senha, token ou código de autenticação.</p>
         <Button type="submit" size="lg" disabled={pending || uploading}>
           {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {pending ? "Publicando..." : kind === "showcase" ? "Publicar exposição" : "Publicar anúncio"}
+          {pending ? "Salvando..." : editing ? "Salvar alterações" : kind === "showcase" ? "Publicar exposição" : "Publicar produto"}
         </Button>
       </div>
     </form>

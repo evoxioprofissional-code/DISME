@@ -13,7 +13,7 @@ Estado atualizado em 22/09/2026. Build de produção e `tsc` limpos; branch
   set "PGUSER=postgres.ytvewdrxquglzvssljza"
   node scripts/migrate.mjs
   ```
-- Migrations 0001–0015 **já aplicadas** (inclui buckets `discord-history`, `profile-media` e `marketplace-media`).
+- Migrations 0001–0016 **já aplicadas** (inclui buckets `discord-history`, `profile-media`, `marketplace-media` e `store-media`).
 - Segredos só em `.env.local` (gitignored): anon, service_role, `DISCORD_BOT_TOKEN`. **Recomendo rotacionar** (passaram pelo chat). Opcional: `OATHNET_API_KEY`, `NAMEDC_API_TOKEN`.
 - Produção: `https://www.disme.cloud`.
 - Para preparar outro computador, siga `SETUP_NOTEBOOK.md`.
@@ -35,6 +35,13 @@ Estado atualizado em 22/09/2026. Build de produção e `tsc` limpos; branch
    DisMe. Contas só podem usar o modo `showcase`: sem preço, compra, troca,
    transferência ou CTA comercial. A restrição também existe no banco. Inclui
    até 5 imagens, busca, categorias, favoritos, denúncia e página detalhada.
+8. **Lojas de usuários**: cada perfil pode criar uma loja com nome, URL, logo,
+   capa, descrição e visibilidade. O Marketplace abre pela vitrine de lojas;
+   produtos e exposições pertencem obrigatoriamente a uma loja. O painel
+   `/store/manage` permite criar, editar, pausar/reativar e excluir publicações.
+   A loja também aparece no perfil público.
+9. **Capa de perfil**: `/profile/edit` agora envia e salva capa real no bucket
+   `profile-media`, além do avatar já existente.
 
 ## Limites honestos já explicados ao dono
 - **Badges "coloridas" (Nitro, Boost, Quest, Orbs, tag)**: NÃO vêm no `public_flags` da API de bot. Só via endpoint de profile (token de usuário/self-bot = proibido, ToS) ou API de terceiro. As de `public_flags` (Staff/HypeSquad/Bug Hunter/Early Supporter/Active Developer) já funcionam.
