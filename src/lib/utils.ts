@@ -11,6 +11,11 @@ export function formatNumber(n: number) {
   return new Intl.NumberFormat("pt-BR").format(n);
 }
 
+/** 9.9 -> "R$ 9,90" */
+export function formatBrl(amount: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount);
+}
+
 /** 12480 -> "12,5 mil" for compact tiles. */
 export function formatCompact(n: number) {
   if (n < 1000) return String(n);

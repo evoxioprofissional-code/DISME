@@ -9,6 +9,7 @@ import { GiftGlyph } from "./GiftGlyph";
 import { RarityTag } from "@/components/ui/RarityTag";
 import { SendGiftModal } from "./SendGiftModal";
 import { GiftRevealModal } from "./GiftRevealModal";
+import { AddCreditsModal } from "./AddCreditsModal";
 import { useAuthGate } from "@/components/auth/AuthProvider";
 
 type DisplayCategory = NonNullable<Gift["displayCategory"]>;
@@ -59,6 +60,8 @@ export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: G
   const [cat, setCat] = useState<DisplayCategory | "todos">("todos");
   const [selected, setSelected] = useState<Gift | null>(null);
   const [sent, setSent] = useState<{ gift: Gift; recipient: User } | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [creditBalance, setCreditBalance] = useState(credits);
 
   const list = useMemo(
     () => {
@@ -77,10 +80,14 @@ export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: G
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Seus créditos</p>
           <p className="tnum flex items-center gap-1.5 text-lg font-extrabold text-text">
             <Coins className="size-4 text-gold" />
-            {formatNumber(credits)}
+            {formatNumber(creditBalance)}
           </p>
         </div>
-        <button className="rounded-full bg-surface-3 px-4 py-2 text-sm font-semibold text-text transition-colors hover:bg-hover">
+        <button
+          type="button"
+          onClick={() => requireAuth(() => setBuyOpen(true))}
+          className="rounded-full bg-surface-3 px-4 py-2 text-sm font-semibold text-text transition-colors hover:bg-hover"
+        >
           Adicionar créditos
         </button>
       </div>
@@ -124,15 +131,25 @@ export function GiftStore({ gifts, credits, candidates, presetUser }: { gifts: G
         {selected && (
           <SendGiftModal
             gift={selected}
-            credits={credits}
+            credits={creditBalance}
             candidates={candidates}
             presetUser={presetUser}
             onClose={() => setSelected(null)}
             onSent={(recipient) => {
               const g = selected;
+              setCreditBalance((balance) => Math.max(0, balance - g.price));
               setSelected(null);
               setSent({ gift: g, recipient });
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {buyOpen && (
+          <AddCreditsModal
+            onClose={() => setBuyOpen(false)}
+            onCredited={(balance) => setCreditBalance(balance)}
           />
         )}
       </AnimatePresence>
