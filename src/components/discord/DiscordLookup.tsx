@@ -65,7 +65,7 @@ function accountAge(value: string) {
 
 const badgeIcons = { shield: ShieldCheck, handshake: Handshake, sparkles: Sparkles, bug: Bug, flame: Flame, gem: Gem, scale: Scale, heart: Heart, bot: Bot, code: Code, gavel: Gavel, terminal: Terminal };
 
-const TABS = ["visao", "historico", "avatares", "banners", "badges", "atividade"] as const;
+const TABS = ["visao", "historico", "avatares", "banners", "badges"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABELS: Record<Tab, string> = {
   visao: "Visão geral",
@@ -73,7 +73,6 @@ const TAB_LABELS: Record<Tab, string> = {
   avatares: "Avatares",
   banners: "Banners",
   badges: "Badges",
-  atividade: "Atividade",
 };
 
 export function DiscordLookup() {
@@ -187,6 +186,8 @@ function ProfileView({
   const [tab, setTab] = useState<Tab>("visao");
   const [copied, setCopied] = useState(false);
   const accent = user.accentColor != null ? `#${user.accentColor.toString(16).padStart(6, "0")}` : null;
+  const visibleTabs = user.badges.length > 0 ? TABS : TABS.filter((item) => item !== "badges");
+  const activeTab = tab === "badges" && user.badges.length === 0 ? "visao" : tab;
 
   async function copyId() {
     await navigator.clipboard.writeText(user.id);
@@ -303,13 +304,13 @@ function ProfileView({
       {/* Tabs */}
       <div className="flex items-center justify-between gap-3">
         <div className="no-scrollbar flex gap-1 overflow-x-auto">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
                 "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                tab === t ? "bg-surface-3 text-text ring-1 ring-inset ring-border-strong" : "text-text-secondary hover:bg-surface-2 hover:text-text",
+                activeTab === t ? "bg-surface-3 text-text ring-1 ring-inset ring-border-strong" : "text-text-secondary hover:bg-surface-2 hover:text-text",
               )}
             >
               {TAB_LABELS[t]}
@@ -331,18 +332,11 @@ function ProfileView({
         </div>
       </div>
 
-      {tab === "visao" && <Overview user={user} onCopyId={copyId} />}
-      {tab === "historico" && <HistoryTab result={result} />}
-      {tab === "avatares" && <MediaTab kind="avatar" history={history} currentUrl={user.avatarUrl} />}
-      {tab === "banners" && <MediaTab kind="banner" history={history} currentUrl={user.bannerUrl} />}
-      {tab === "badges" && <BadgesTab user={user} />}
-      {tab === "atividade" && (
-        <EmptyPanel
-          icon={<Rocket className="size-7" />}
-          title="Atividade não disponível"
-          description="Status online, jogo atual e presença exigem que o bot compartilhe servidor com a pessoa — não é possível por ID solto."
-        />
-      )}
+      {activeTab === "visao" && <Overview user={user} onCopyId={copyId} />}
+      {activeTab === "historico" && <HistoryTab result={result} />}
+      {activeTab === "avatares" && <MediaTab kind="avatar" history={history} currentUrl={user.avatarUrl} />}
+      {activeTab === "banners" && <MediaTab kind="banner" history={history} currentUrl={user.bannerUrl} />}
+      {activeTab === "badges" && <BadgesTab user={user} />}
     </div>
   );
 }
@@ -372,7 +366,7 @@ function Overview({ user, onCopyId }: { user: DiscordPublicUser; onCopyId: () =>
         />
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className={cn("grid gap-3", user.badges.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
         <Panel title="Perfil" icon={<UserRound className="size-4 text-brand" />}>
           <Row icon={<UserRound className="size-4" />} label="Nome de usuário" value={`@${user.username}`} />
           <Row icon={<AtSign className="size-4" />} label="Nome de exibição" value={user.displayName || "—"} />
@@ -382,8 +376,8 @@ function Overview({ user, onCopyId }: { user: DiscordPublicUser; onCopyId: () =>
           <Row icon={<Terminal className="size-4" />} label="Bio" value="Não informada" muted />
         </Panel>
 
-        <Panel title="Badges" icon={<Award className="size-4 text-brand" />}>
-          {user.badges.length > 0 ? (
+        {user.badges.length > 0 && (
+          <Panel title="Badges" icon={<Award className="size-4 text-brand" />}>
             <div className="flex flex-wrap gap-2">
               {user.badges.map((badge) => {
                 const Icon = badgeIcons[badge.icon as keyof typeof badgeIcons] ?? ShieldCheck;
@@ -394,18 +388,8 @@ function Overview({ user, onCopyId }: { user: DiscordPublicUser; onCopyId: () =>
                 );
               })}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-surface-2 text-muted">
-                <Award className="size-6" />
-              </span>
-              <p className="text-sm font-bold text-text">Nenhuma badge pública</p>
-              <p className="max-w-xs text-xs text-muted">
-                Badges de Nitro, Boost e Quest não vêm pela API pública — só as flags do perfil.
-              </p>
-            </div>
-          )}
-        </Panel>
+          </Panel>
+        )}
 
         <Panel title="Status e flags" icon={<Hash className="size-4 text-brand" />}>
           <Row icon={<Hash className="size-4" />} label="Public flags" value={String(user.publicFlagsRaw)} />
@@ -558,15 +542,6 @@ function MediaTab({
 }
 
 function BadgesTab({ user }: { user: DiscordPublicUser }) {
-  if (user.badges.length === 0) {
-    return (
-      <EmptyPanel
-        icon={<Award className="size-7" />}
-        title="Nenhuma badge pública encontrada"
-        description="A API pública só expõe as flags do perfil (Staff, HypeSquad, Bug Hunter, Early Supporter, Active Developer). Nitro, Boost e Quest não são retornados."
-      />
-    );
-  }
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {user.badges.map((badge) => {
