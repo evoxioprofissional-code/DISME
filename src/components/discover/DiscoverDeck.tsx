@@ -10,7 +10,7 @@ import {
   useTransform,
   type PanInfo,
 } from "motion/react";
-import { X, SlidersHorizontal, MapPin, Maximize2, Zap } from "lucide-react";
+import { X, SlidersHorizontal, MapPin, Maximize2, ThumbsUp, UserRound } from "lucide-react";
 import type { User } from "@/types";
 import { getGame } from "@/data";
 import { intentMeta } from "@/lib/labels";
@@ -134,22 +134,28 @@ export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User 
       </div>
 
       {current && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <ActionButton label="Passar" onClick={onPass} variant="pass">
-            <X className="size-6" strokeWidth={2.6} />
-          </ActionButton>
-          <ActionButton label="Curtir" onClick={() => onLike(current)} variant="like">
-            <Zap className="size-7" strokeWidth={2.4} />
-          </ActionButton>
-          <ActionButton
-            label="Crush"
-            onClick={() => onCrush(current)}
-            variant="crush"
-            disabled={crushesLeft <= 0}
-            badge={crushesLeft}
-          >
-            <CrushIcon className="size-6" />
-          </ActionButton>
+        <div className="mt-5">
+          <div className="grid grid-cols-3 gap-2.5" aria-label="Ações de descoberta">
+            <ActionButton label="Passar" hint="Próximo perfil" onClick={onPass} variant="pass">
+              <X className="size-5" strokeWidth={2.6} />
+            </ActionButton>
+            <ActionButton label="Curtir" hint="Pode dar match" onClick={() => onLike(current)} variant="like">
+              <ThumbsUp className="size-5" strokeWidth={2.4} />
+            </ActionButton>
+            <ActionButton
+              label="Crush"
+              hint="Curtida especial"
+              onClick={() => onCrush(current)}
+              variant="crush"
+              disabled={crushesLeft <= 0}
+              badge={crushesLeft}
+            >
+              <CrushIcon className="size-5" />
+            </ActionButton>
+          </div>
+          <p className="mt-3 text-center text-[11px] leading-4 text-muted">
+            Curtir ou enviar Crush gera match quando a outra pessoa também curtiu você.
+          </p>
         </div>
       )}
 
@@ -181,6 +187,7 @@ export function DiscoverDeck({ candidates, me }: { candidates: User[]; me: User 
 function ActionButton({
   children,
   label,
+  hint,
   onClick,
   variant,
   disabled,
@@ -188,30 +195,45 @@ function ActionButton({
 }: {
   children: React.ReactNode;
   label: string;
+  hint: string;
   onClick: () => void;
   variant: "pass" | "like" | "crush";
   disabled?: boolean;
   badge?: number;
 }) {
   const styles = {
-    pass: "size-14 bg-surface-2 text-text-secondary hover:bg-hover hover:text-text",
-    like: "size-16 bg-brand text-on-brand hover:bg-brand-hover",
+    pass: "border-border bg-surface text-text-secondary hover:border-border-strong hover:bg-hover hover:text-text",
+    like: "border-brand bg-brand text-on-brand hover:bg-brand-hover",
     crush:
-      "size-14 border border-rarity-limited/40 bg-rarity-limited/10 text-rarity-limited hover:bg-rarity-limited/20",
+      "border-rarity-limited/40 bg-rarity-limited/10 text-rarity-limited hover:bg-rarity-limited/20",
   }[variant];
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      aria-label={label}
+      aria-label={`${label}. ${hint}`}
       className={cn(
-        "relative flex items-center justify-center rounded-full transition-colors disabled:opacity-40",
+        "relative flex min-w-0 flex-col items-center justify-center rounded-2xl border px-2 py-3 text-center transition-[background-color,border-color,transform] hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-40",
         styles,
       )}
     >
-      {children}
+      <span className={cn(
+        "flex size-9 items-center justify-center rounded-full",
+        variant === "pass" && "bg-surface-3",
+        variant === "like" && "bg-white/14",
+        variant === "crush" && "bg-rarity-limited/10",
+      )}>
+        {children}
+      </span>
+      <span className="mt-2 text-xs font-extrabold">{label}</span>
+      <span className={cn(
+        "mt-0.5 truncate text-[9px] font-medium",
+        variant === "like" ? "text-white/75" : "text-muted",
+      )}>
+        {hint}
+      </span>
       {typeof badge === "number" && (
-        <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full bg-surface-3 text-[11px] font-bold text-text ring-2 ring-bg">
+        <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-surface-3 text-[10px] font-bold text-text ring-2 ring-bg">
           {badge}
         </span>
       )}
@@ -294,15 +316,21 @@ function CardShell({
 }) {
   return (
     <div className="relative size-full select-none overflow-hidden rounded-3xl border border-border bg-surface-2">
-      <Image
-        src={user.avatar}
-        alt={user.displayName}
-        fill
-        sizes="384px"
-        className="object-cover"
-        draggable={false}
-        priority
-      />
+      {user.avatar ? (
+        <Image
+          src={user.avatar}
+          alt={user.displayName}
+          fill
+          sizes="384px"
+          className="object-cover"
+          draggable={false}
+          priority
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-3" aria-label={`${user.displayName} está sem foto`}>
+          <UserRound className="size-20 text-muted" strokeWidth={1.2} />
+        </div>
+      )}
       {/* bottom scrim for text legibility (functional, not decorative) */}
       <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
