@@ -125,6 +125,22 @@ export async function sendGift(
   return { ok: true };
 }
 
+export async function saveFeaturedGifts(
+  giftIds: string[],
+): Promise<{ ok: boolean; error?: string }> {
+  if (giftIds.length > 3 || new Set(giftIds).size !== giftIds.length) {
+    return { ok: false, error: "Escolha até 3 presentes diferentes." };
+  }
+  const supabase = await createClient();
+  await meId();
+  const { error } = await supabase.rpc("set_profile_featured_gifts", {
+    selected_gifts: giftIds,
+  });
+  if (error) return { ok: false, error: "Não foi possível salvar os destaques." };
+  revalidatePath("/profile/[username]", "page");
+  return { ok: true };
+}
+
 // -------- messages --------
 async function ensureConversation(otherId: string): Promise<string> {
   const supabase = await createClient();

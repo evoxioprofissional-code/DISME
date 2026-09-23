@@ -10,6 +10,7 @@ const sizes = {
   lg: 56,
   xl: 72,
   "2xl": 96,
+  "3xl": 116,
 } as const;
 
 type Size = keyof typeof sizes;
@@ -26,6 +27,7 @@ export function Avatar({
   presence,
   className,
   rounded = "full",
+  priority = false,
 }: {
   src?: string | null;
   name: string;
@@ -33,12 +35,15 @@ export function Avatar({
   presence?: PresenceState;
   className?: string;
   rounded?: "full" | "xl";
+  priority?: boolean;
 }) {
   const px = sizes[size];
   const dot =
     size === "xs" || size === "sm"
       ? "size-2.5 -bottom-0 -right-0"
-      : "size-3.5 bottom-0.5 right-0.5";
+      : size === "3xl"
+        ? "size-4 bottom-1 right-1"
+        : "size-3.5 bottom-0.5 right-0.5";
   const radius = rounded === "full" ? "rounded-full" : "rounded-lg";
 
   return (
@@ -52,6 +57,7 @@ export function Avatar({
           alt={name}
           width={px}
           height={px}
+          priority={priority}
           className={cn("size-full bg-surface-3 object-cover", radius)}
         />
       ) : (

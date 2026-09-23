@@ -11,11 +11,13 @@ export function StartConversationButton({
   className,
   label = "Conversar",
   showIcon = true,
+  iconOnly = false,
 }: {
   otherId: string;
   className?: string;
   label?: string;
   showIcon?: boolean;
+  iconOnly?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -47,7 +49,7 @@ export function StartConversationButton({
       ) : showIcon ? (
         <MessageCircle className="size-4" aria-hidden="true" />
       ) : null}
-      {error ? "Tentar novamente" : label}
+      {!iconOnly && (error ? "Tentar novamente" : label)}
     </button>
   );
 }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Gift,
-  MessageCircle,
   HeartHandshake,
   MoreHorizontal,
   Ban,
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { RelationshipModal } from "@/components/relationship/RelationshipModal";
 import { requestRelationship } from "@/lib/actions";
 import { useAuthGate } from "@/components/auth/AuthProvider";
+import { StartConversationButton } from "@/components/messages/StartConversationButton";
 
 export function ProfileActions({
   isSelf,
@@ -54,16 +54,16 @@ export function ProfileActions({
       <div className="flex items-center gap-2">
         <Link
           href="/profile/edit"
-          className="flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
+          className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[11px] font-bold text-on-brand transition-colors hover:bg-brand-hover"
         >
-          <Pencil className="size-4" />
+          <Pencil className="size-3.5" />
           Editar perfil
         </Link>
         <button
           aria-label="Compartilhar"
-          className="flex size-11 items-center justify-center rounded-full bg-surface-3 text-text-secondary transition-colors hover:bg-hover hover:text-text"
+          className="flex size-9 items-center justify-center rounded-full bg-surface-3 text-text-secondary transition-colors hover:bg-hover hover:text-text"
         >
-          <Share2 className="size-5" />
+          <Share2 className="size-4" />
         </button>
       </div>
     );
@@ -74,18 +74,17 @@ export function ProfileActions({
     <div className="flex items-center gap-2">
       <button
         onClick={() => requireAuth(() => router.push(`/gifts?to=${username}`))}
-        className="flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-bold text-on-brand transition-colors hover:bg-brand-hover"
+        className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[11px] font-bold text-on-brand transition-colors hover:bg-brand-hover"
       >
-        <Gift className="size-4" />
+        <Gift className="size-3.5" />
         Presentear
       </button>
-      <button
-        onClick={() => requireAuth(() => router.push("/messages"))}
-        aria-label="Mensagem"
-        className="flex size-11 items-center justify-center rounded-full bg-surface-3 text-text transition-colors hover:bg-hover"
-      >
-        <MessageCircle className="size-5" />
-      </button>
+      <StartConversationButton
+        otherId={userId}
+        label="Mensagem"
+        iconOnly
+        className="flex size-9 items-center justify-center rounded-full bg-surface-3 text-text transition-colors hover:bg-hover"
+      />
       {canRelationship && (
         <button
           onClick={() =>
@@ -93,14 +92,14 @@ export function ProfileActions({
           }
           aria-pressed={relRequested}
           className={cn(
-            "flex size-11 items-center justify-center rounded-full transition-colors",
+            "flex size-9 items-center justify-center rounded-full transition-colors",
             relRequested
               ? "bg-brand-tint text-brand ring-1 ring-inset ring-brand/40"
               : "bg-surface-3 text-text hover:bg-hover",
           )}
           title={relRequested ? "Pedido enviado" : "Solicitar relacionamento"}
         >
-          {relRequested ? <Check className="size-5" /> : <HeartHandshake className="size-5" />}
+          {relRequested ? <Check className="size-4" /> : <HeartHandshake className="size-4" />}
         </button>
       )}
 
@@ -110,9 +109,9 @@ export function ProfileActions({
           aria-label="Mais opções"
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          className="flex size-11 items-center justify-center rounded-full bg-surface-3 text-text-secondary transition-colors hover:bg-hover hover:text-text"
+          className="flex size-9 items-center justify-center rounded-full bg-surface-3 text-text-secondary transition-colors hover:bg-hover hover:text-text"
         >
-          <MoreHorizontal className="size-5" />
+          <MoreHorizontal className="size-4" />
         </button>
         {menuOpen && (
           <div

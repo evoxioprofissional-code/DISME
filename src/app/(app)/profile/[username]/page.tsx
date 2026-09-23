@@ -1,313 +1,121 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ChevronRight, Camera, Store as StoreIcon, Radio } from "lucide-react";
-import { getGame } from "@/data";
-import { getCollection, getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
-import { intentMeta, relationshipMeta, connectionMeta } from "@/lib/labels";
-import { formatNumber, formatCompact, serial as fmtSerial, pluralDays } from "@/lib/utils";
+import { Camera, Coins, Flame, Gift, MapPin, Send } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
-import { Section } from "@/components/ui/Section";
-import { RarityTag } from "@/components/ui/RarityTag";
-import { GiftGlyph } from "@/components/gifts/GiftGlyph";
 import { Icon } from "@/components/icons/Icon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
+import { ProfileActivity } from "@/components/profile/ProfileActivity";
+import { ProfileGiftShowcase } from "@/components/profile/ProfileGiftShowcase";
+import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import { presenceLabel } from "@/components/ui/PresenceDot";
+import { getCoupleByUser, getProfileByUsername, getSessionUserId } from "@/lib/queries";
+import { getProfileShowcase } from "@/lib/profile-showcase";
+import { intentMeta, relationshipMeta } from "@/lib/labels";
+import { formatNumber, pluralDays } from "@/lib/utils";
 import { getStoreByOwner } from "@/lib/marketplace";
 import { listDiscordServersByOwner } from "@/lib/server-directory";
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const user = await getProfileByUsername(username);
   if (!user) notFound();
 
-  const [currentUserId, coupleData, collection, store, servers] = await Promise.all([
+  const [currentUserId, coupleData, showcase, store, servers] = await Promise.all([
     getSessionUserId(),
     getCoupleByUser(user.id),
-    getCollection(user.id, 8),
+    getProfileShowcase(user.id),
     getStoreByOwner(user.id),
     listDiscordServersByOwner(user.id),
   ]);
-  const isSelf = user.id === currentUserId;
+  const isSelf = currentUserId === user.id;
   const couple = coupleData?.couple;
   const partner = coupleData ? (coupleData.a.id === user.id ? coupleData.b : coupleData.a) : undefined;
   const canRelationship = !isSelf && user.relationship === "solteiro";
-
   const stats = [
-    { label: "Presentes", value: user.stats.giftsReceived },
-    { label: "Matches", value: user.stats.matches },
-    { label: "Seguidores", value: user.stats.followers },
-    { label: "Coleção", value: user.stats.collectionCount },
+    { label: "Presentes recebidos", value: showcase.stats.giftsReceived, icon: <Gift className="size-4" /> },
+    { label: "Presentes enviados", value: showcase.stats.giftsSent, icon: <Send className="size-4" /> },
+    { label: "Créditos enviados", value: showcase.stats.creditsSent, icon: <Coins className="size-4" /> },
+    { label: "Matches", value: user.stats.matches, icon: <Flame className="size-4" /> },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pb-6 sm:px-6 lg:pb-10">
-      {/* Header */}
-      <div className="overflow-hidden rounded-b-3xl sm:rounded-3xl sm:border sm:border-border sm:bg-surface">
-        <div className="relative h-36 sm:h-52">
+    <div className="mx-auto w-full max-w-[1120px] px-3 pb-8 sm:px-5 lg:px-6 lg:pb-12">
+      <header className="overflow-hidden rounded-2xl border border-border bg-surface">
+        <div className="relative h-[170px] bg-[#15151a] sm:h-[210px]">
           {user.banner && (
-            <Image
-              src={user.banner}
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 1024px, 100vw"
-              className="object-cover"
-              priority
-            />
+            <Image src={user.banner} alt={`Capa de ${user.displayName}`} fill sizes="(min-width: 1200px) 1120px, 100vw" className="object-cover" priority />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface/80 to-transparent sm:from-surface" />
+          <div className="absolute inset-0 bg-black/15" />
           {isSelf && (
-            <Link href="/profile/edit#capa" className="absolute right-4 top-4 flex h-9 items-center gap-2 rounded-full bg-[#0a0a0de6] px-3.5 text-xs font-bold text-white">
-              <Camera className="size-4" /> {user.banner ? "Trocar capa" : "Adicionar capa"}
+            <Link href="/profile/edit#capa" className="absolute right-3 top-3 flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-black/75 px-3 text-[10px] font-bold text-white transition-colors hover:bg-black sm:right-4 sm:top-4">
+              <Camera className="size-3.5" />{user.banner ? "Editar capa" : "Adicionar capa"}
             </Link>
           )}
         </div>
 
         <div className="relative px-4 pb-5 sm:px-6">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="-mt-12 flex items-end gap-4 sm:-mt-14">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="-mt-[58px] flex min-w-0 items-end gap-3 sm:-mt-[62px] sm:gap-4">
               <div className="relative shrink-0">
-                <Avatar
-                  src={user.avatar}
-                  name={user.displayName}
-                  size="2xl"
-                  presence={user.presence}
-                  rounded="xl"
-                  className="rounded-2xl ring-4 ring-surface"
-                />
+                <Avatar src={user.avatar} name={user.displayName} size="3xl" presence={user.presence} rounded="xl" priority className="rounded-2xl ring-4 ring-surface" />
                 {isSelf && (
-                  <Link
-                    href="/profile/edit#foto"
-                    aria-label={user.avatar ? "Trocar foto de perfil" : "Adicionar foto de perfil"}
-                    title={user.avatar ? "Trocar foto de perfil" : "Adicionar foto de perfil"}
-                    className="absolute -bottom-2 -right-2 flex size-10 items-center justify-center rounded-full bg-brand text-on-brand ring-4 ring-surface transition-colors hover:bg-brand-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                  >
-                    <Camera className="size-[18px]" />
+                  <Link href="/profile/edit#foto" aria-label={user.avatar ? "Trocar foto de perfil" : "Adicionar foto de perfil"} className="absolute -bottom-1 -right-1 z-10 flex size-8 items-center justify-center rounded-full bg-brand text-white ring-4 ring-surface transition-colors hover:bg-brand-hover">
+                    <Camera className="size-3.5" />
                   </Link>
                 )}
               </div>
-              <div className="pb-1">
-                <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-                  {user.displayName}
-                </h1>
-                <p className="text-sm text-muted">@{user.username}</p>
-              </div>
-            </div>
-            <div className="pb-1">
-              <ProfileActions
-                isSelf={isSelf}
-                userId={user.id}
-                username={user.username}
-                displayName={user.displayName}
-                canRelationship={canRelationship}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-secondary">
-            <span className="tnum font-semibold text-text">{user.age} anos</span>
-            {user.pronouns && <span>{user.pronouns}</span>}
-            {user.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="size-4" />
-                {user.location}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <span
-                className={
-                  user.presence === "online"
-                    ? "size-2 rounded-full bg-online"
-                    : "size-2 rounded-full bg-muted"
-                }
-              />
-              {user.presence === "online" ? "Online agora" : presenceLabel[user.presence]}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Relationship banner */}
-      {partner && couple && (
-        <Link
-          href={`/couple/${couple.id}`}
-          className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 transition-colors hover:border-border-strong hover:bg-surface-2"
-        >
-          <Icon name="heart-handshake" className="size-5 text-brand" />
-          <p className="flex-1 text-sm">
-            <span className="font-semibold text-text">{relationshipMeta[user.relationship]}</span>
-            <span className="text-text-secondary"> com </span>
-            <span className="font-semibold text-text">{partner.displayName}</span>
-            <span className="text-muted"> · {pluralDays(couple.streakDays)}</span>
-          </p>
-          <ChevronRight className="size-4 text-muted" />
-        </Link>
-      )}
-
-      {/* Body */}
-      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-7">
-          <Section title="Sobre">
-            <p className="text-[15px] leading-relaxed text-text-secondary">{user.bio}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Chip variant="brand" icon={<Icon name={intentMeta[user.intent].icon} />}>
-                {intentMeta[user.intent].label}
-              </Chip>
-              <Chip>{relationshipMeta[user.relationship]}</Chip>
-            </div>
-          </Section>
-
-          <Section title="Jogos">
-            <div className="flex flex-wrap gap-2">
-              {user.games.map((g) => {
-                const game = getGame(g);
-                return (
-                  <span
-                    key={g}
-                    className="inline-flex items-center gap-2 rounded-full bg-surface-2 py-1.5 pl-3 pr-3.5 text-sm font-medium text-text"
-                  >
-                    <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-text-secondary">
-                      {game?.short}
-                    </span>
-                    {game?.name}
+              <div className="min-w-0 pb-1.5">
+                <h1 className="truncate text-xl font-black tracking-[-0.025em] text-text sm:text-2xl">{user.displayName}</h1>
+                <p className="truncate text-xs font-medium text-muted">@{user.username}</p>
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-text-secondary">
+                  {user.age > 0 && <span>{user.age} anos</span>}
+                  {user.age > 0 && <span className="text-muted">•</span>}
+                  <span className="flex items-center gap-1">
+                    <span className={user.presence === "online" ? "size-1.5 rounded-full bg-online" : "size-1.5 rounded-full bg-muted"} />
+                    {user.presence === "online" ? "Online" : presenceLabel[user.presence]}
                   </span>
-                );
-              })}
-            </div>
-          </Section>
-
-          <Section title="Interesses">
-            <div className="flex flex-wrap gap-2">
-              {user.interests.map((i) => (
-                <Chip key={i}>{i}</Chip>
-              ))}
-            </div>
-          </Section>
-
-          <Section
-            title={`Coleção · ${user.stats.collectionCount}`}
-            action="Ver tudo"
-            href={`/collection/${user.username}`}
-          >
-            <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6">
-              {collection.map((og) => {
-                const gift = og.gift;
-                return (
-                  <div key={og.id} className="text-center">
-                    <GiftGlyph
-                      giftId={gift.id}
-                      rarity={gift.rarity}
-                      className="aspect-square w-full"
-                    />
-                    <p className="mt-1.5 truncate text-xs font-semibold text-text">{gift.name}</p>
-                    {gift.supply && og.serial ? (
-                      <p className="tnum text-[10px] text-muted">
-                        {fmtSerial(og.serial, gift.supply)}
-                      </p>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </Section>
-        </div>
-
-        {/* Aside */}
-        <aside className="space-y-4">
-          {(store || isSelf) && (
-            <Card className="p-5">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-brand-tint text-brand"><StoreIcon className="size-5" /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted">Loja</p>
-                  <p className="mt-1 truncate text-sm font-extrabold text-text">{store?.name ?? "Crie sua loja"}</p>
-                  <p className="mt-1 text-xs leading-5 text-text-secondary">{store ? "Produtos e exposições deste perfil." : "Publique produtos em um espaço próprio."}</p>
-                </div>
+                  {user.location && <><span className="text-muted">•</span><span className="flex items-center gap-1"><MapPin className="size-3" />{user.location}</span></>}
+                </p>
               </div>
-              <Link href={store ? `/store/${store.slug}` : "/store/new"} className="mt-4 flex h-10 w-full items-center justify-center rounded-full border border-border-strong text-sm font-bold text-text transition-colors hover:bg-surface-2">
-                {store ? "Visitar loja" : "Criar minha loja"}
+            </div>
+            <div className="self-end sm:pb-1.5">
+              <ProfileActions isSelf={isSelf} userId={user.id} username={user.username} displayName={user.displayName} canRelationship={canRelationship} />
+            </div>
+          </div>
+
+          {user.bio && <p className="mt-4 max-w-2xl whitespace-pre-line text-xs leading-5 text-text-secondary sm:text-sm">{user.bio}</p>}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Chip variant="brand" icon={<Icon name={intentMeta[user.intent].icon} />}>{intentMeta[user.intent].label}</Chip>
+            <Chip variant="outline">{relationshipMeta[user.relationship]}</Chip>
+            {partner && couple && (
+              <Link href={`/couple/${couple.id}`} className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-text-secondary transition-colors hover:border-border-strong hover:text-text">
+                com {partner.displayName} · {pluralDays(couple.streakDays)}
               </Link>
-            </Card>
-          )}
-          {(servers.length > 0 || isSelf) && (
-            <Card className="p-5">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-surface-2 text-text-secondary"><Radio className="size-5" /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted">Servidores</p>
-                  <p className="mt-1 text-sm font-extrabold text-text">{servers.length ? `${servers.length} ${servers.length === 1 ? "servidor anunciado" : "servidores anunciados"}` : "Anuncie seu servidor"}</p>
-                  <p className="mt-1 text-xs leading-5 text-text-secondary">Dados verificados pela API oficial do Discord.</p>
-                </div>
-              </div>
-              <Link href={servers[0] ? `/server/${servers[0].id}` : "/servers/new"} className="mt-4 flex h-10 w-full items-center justify-center rounded-full border border-border-strong text-sm font-bold text-text transition-colors hover:bg-surface-2">{servers[0] ? "Ver servidor" : "Anunciar servidor"}</Link>
-            </Card>
-          )}
-          <Card className="p-5">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted">Flex</p>
-            <p className="tnum mt-0.5 text-3xl font-extrabold text-brand">
-              {formatNumber(user.stats.flex)}
-            </p>
-            {user.flexRank && (
-              <p className="mt-1 text-xs text-text-secondary">
-                #{user.flexRank} no ranking global
-              </p>
             )}
-            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
-              {stats.map((s) => (
-                <div key={s.label}>
-                  <p className="tnum text-lg font-bold text-text">{formatCompact(s.value)}</p>
-                  <p className="text-xs text-muted">{s.label}</p>
-                </div>
-              ))}
+          </div>
+        </div>
+      </header>
+
+      <section className="mt-3 grid grid-cols-2 overflow-hidden rounded-2xl border border-border bg-surface sm:grid-cols-4">
+        {stats.map((stat, index) => (
+          <div key={stat.label} className={`flex min-h-20 items-center gap-3 px-4 py-3 ${index % 2 ? "border-l border-border" : ""} ${index >= 2 ? "border-t border-border sm:border-t-0" : ""} ${index === 2 ? "sm:border-l" : ""}`}>
+            <span className="text-brand">{stat.icon}</span>
+            <div className="min-w-0">
+              <p className="tnum text-lg font-black tracking-tight text-text">{formatNumber(stat.value)}</p>
+              <p className="text-[9px] font-bold uppercase leading-3 tracking-[0.07em] text-muted sm:text-[10px]">{stat.label}</p>
             </div>
-          </Card>
+          </div>
+        ))}
+      </section>
 
-          {user.badges.length > 0 && (
-            <Card className="p-5">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">
-                Conquistas
-              </p>
-              <div className="space-y-2.5">
-                {user.badges.map((b) => (
-                  <div key={b.id} className="flex items-center gap-3">
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-surface-2 text-brand">
-                      <Icon name={b.icon} className="size-[18px]" />
-                    </span>
-                    <span className="flex-1 text-sm font-semibold text-text">{b.label}</span>
-                    {b.rarity && <RarityTag rarity={b.rarity} />}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {user.connections.length > 0 && (
-            <Card className="p-5">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted">Conexões</p>
-              <div className="space-y-3">
-                {user.connections.map((c) => (
-                  <div key={c.platform} className="flex items-center gap-3">
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-surface-2 text-text-secondary">
-                      <Icon name={connectionMeta[c.platform].icon} className="size-[18px]" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-text">
-                        {connectionMeta[c.platform].label}
-                      </p>
-                      <p className="truncate text-xs text-muted">{c.detail ?? c.handle}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-        </aside>
+      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(270px,1fr)]">
+        <main className="min-w-0 space-y-3">
+          <ProfileGiftShowcase collection={showcase.collection} featured={showcase.featured} received={showcase.received} sent={showcase.sent} isSelf={isSelf} />
+          <ProfileActivity items={showcase.activity} profileName={user.displayName} username={user.username} />
+        </main>
+        <ProfileSidebar user={user} store={store} servers={servers} followers={showcase.stats.followers} following={showcase.stats.following} isSelf={isSelf} />
       </div>
     </div>
   );
