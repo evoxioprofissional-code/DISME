@@ -11,6 +11,7 @@ import { CrushIcon } from "@/components/icons/Crush";
 import { getMyProfile, listNotifications, type NotifData } from "@/lib/queries";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoginCta } from "@/components/auth/LoginCta";
+import { NotificationsReadMarker } from "@/components/notifications/NotificationsReadMarker";
 
 const typeIcon = {
   match: Zap,
@@ -96,8 +97,10 @@ export default async function NotificationsPage() {
     );
   }
   const notifications = await listNotifications();
+  const hasUnread = notifications.some((notification) => !notification.read);
   return (
     <PageContainer>
+      {hasUnread && <NotificationsReadMarker />}
       <PageHeader title="Notificações" />
       {notifications.length === 0 ? (
         <EmptyState title="Tudo tranquilo por aqui" description="Matches, presentes e mensagens aparecerão nesta central." />

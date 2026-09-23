@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User as UserIcon,
   Bell,
@@ -14,12 +15,16 @@ import {
   EyeOff,
   Check,
   X,
+  Radio,
 } from "lucide-react";
 import { connectionMeta } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
 import { Icon } from "@/components/icons/Icon";
-import { signOut, upsertConnection, removeConnection, setProfileHidden } from "@/lib/actions";
+import { signOut, upsertConnection, removeConnection, setProfileHidden, setPresence } from "@/lib/actions";
+import { PresenceDot } from "@/components/ui/PresenceDot";
+import type { PresenceState } from "@/types";
 
 type Platform = "steam" | "spotify" | "riot" | "twitch";
 
@@ -164,14 +169,21 @@ export function Settings({
   email,
   connections,
   initialHidden = false,
+  initialPresence = "offline",
 }: {
   email: string;
   connections: Partial<Record<Platform, string>>;
   initialHidden?: boolean;
+  initialPresence?: PresenceState;
 }) {
+  const router = useRouter();
   const [hidden, setHidden] = useState(initialHidden);
   const [discover, setDiscover] = useState(true);
-  const [online, setOnline] = useState(true);
+  const [presence, setPresenceValue] = useState<PresenceState>(
+    initialPresence === "ocupado" ? "ausente" : initialPresence,
+  );
+  const [presenceError, setPresenceError] = useState("");
+  const [presencePending, startPresenceTransition] = useTransition();
   const [onlyMatches, setOnlyMatches] = useState(true);
   const [notifMatches, setNotifMatches] = useState(true);
   const [notifGifts, setNotifGifts] = useState(true);
@@ -185,6 +197,55 @@ export function Settings({
         <Row label="Editar perfil" hint="Foto, bio, jogos e interesses" href="/profile/edit" right={chevron} />
         <Row label="E-mail" hint={email} />
         <Row label="Idioma" hint="Português (Brasil)" right={chevron} />
+      </Group>
+
+      <Group title="Presença" icon={<Radio className="size-3.5" />}>
+        <div className="px-4 py-4">
+          <p className="text-sm font-semibold text-text">Seu status</p>
+          <p className="mt-0.5 text-xs text-muted">Escolha como você aparece para outras pessoas.</p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {([
+              { value: "online", label: "Online" },
+              { value: "ausente", label: "Ausente" },
+              { value: "offline", label: "Offline" },
+            ] as const).map((option) => {
+              const active = presence === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  disabled={presencePending}
+                  aria-pressed={active}
+                  onClick={() => {
+                    if (active) return;
+                    const previous = presence;
+                    setPresenceValue(option.value);
+                    setPresenceError("");
+                    startPresenceTransition(async () => {
+                      const result = await setPresence(option.value);
+                      if (!result.ok) {
+                        setPresenceValue(previous);
+                        setPresenceError(result.error ?? "Não foi possível atualizar seu status.");
+                        return;
+                      }
+                      router.refresh();
+                    });
+                  }}
+                  className={cn(
+                    "flex min-w-0 items-center justify-center gap-2 rounded-xl border px-2 py-3 text-xs font-bold transition-colors disabled:opacity-60",
+                    active
+                      ? "border-brand bg-brand-tint text-text"
+                      : "border-border bg-bg text-text-secondary hover:border-border-strong hover:bg-hover",
+                  )}
+                >
+                  <PresenceDot state={option.value} ring={false} />
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          {presenceError && <p role="alert" className="mt-2 text-xs font-semibold text-danger">{presenceError}</p>}
+        </div>
       </Group>
 
       <Group title="Privacidade" icon={<Lock className="size-3.5" />}>
@@ -203,7 +264,6 @@ export function Settings({
           }
         />
         <Row label="Aparecer em Descobrir" right={<Switch checked={discover} onChange={setDiscover} label="Aparecer em Descobrir" />} />
-        <Row label="Mostrar status online" right={<Switch checked={online} onChange={setOnline} label="Mostrar status online" />} />
       </Group>
 
       <Group title="Mensagens" icon={<MessageCircle className="size-3.5" />}>

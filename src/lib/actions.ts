@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Intent, RelationshipStatus } from "@/types";
+import type { Intent, PresenceState, RelationshipStatus } from "@/types";
 
 async function meId(): Promise<string> {
   const supabase = await createClient();
@@ -238,6 +238,22 @@ export async function setProfileHidden(hidden: boolean): Promise<{ ok: boolean }
   return { ok: true };
 }
 
+export async function setPresence(
+  presence: PresenceState,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!(["online", "ausente", "offline"] as PresenceState[]).includes(presence)) {
+    return { ok: false, error: "Status inválido." };
+  }
+  const supabase = await createClient();
+  const id = await meId();
+  const payload: { presence: PresenceState; last_seen?: string } = { presence };
+  if (presence === "offline") payload.last_seen = new Date().toISOString();
+  const { error } = await supabase.from("profiles").update(payload).eq("id", id);
+  if (error) return { ok: false, error: "Não foi possível atualizar seu status." };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 // -------- connections --------
 export async function upsertConnection(
   platform: "steam" | "spotify" | "riot" | "twitch" | "discord",
@@ -273,4 +289,5 @@ export async function markNotificationsRead() {
   const id = await meId();
   await supabase.from("notifications").update({ read: true }).eq("profile_id", id).eq("read", false);
   revalidatePath("/notifications");
+  revalidatePath("/", "layout");
 }

@@ -16,6 +16,7 @@ export default async function SettingsPage() {
         <Settings
           email={email ?? "—"}
           initialHidden={me.isHidden ?? false}
+          initialPresence={me.presence}
           connections={Object.fromEntries(
             me.connections
               .filter((c) => ["steam", "spotify", "riot", "twitch"].includes(c.platform))
