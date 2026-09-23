@@ -64,7 +64,7 @@ export async function getProfileShowcase(profileId: string): Promise<ProfileShow
   const catalog = fullCatalog.filter(giftHasAsset);
   const catalogById = new Map(fullCatalog.map((gift) => [gift.id, gift]));
 
-  const [ownedResult, receivedResult, sentWithCostResult, sentAggregateWithCost, followerResult, followingResult, featuredResult] =
+  const [ownedResult, receivedResult, sentResult, sentAggregateResult, followerResult, followingResult, featuredResult] =
     await Promise.all([
       supabase.from("owned_gifts").select("gift_id,from_id").eq("owner_id", profileId).limit(10_000),
       supabase
@@ -76,13 +76,13 @@ export async function getProfileShowcase(profileId: string): Promise<ProfileShow
         .limit(HISTORY_LIMIT),
       supabase
         .from("owned_gifts")
-        .select("id,owner_id,gift_id,received_at,credits_spent")
+        .select("id,owner_id,gift_id,received_at")
         .eq("from_id", profileId)
         .order("received_at", { ascending: false })
         .limit(HISTORY_LIMIT),
       supabase
         .from("owned_gifts")
-        .select("gift_id,credits_spent")
+        .select("gift_id")
         .eq("from_id", profileId)
         .limit(10_000),
       supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", profileId),
@@ -94,27 +94,10 @@ export async function getProfileShowcase(profileId: string): Promise<ProfileShow
         .order("position", { ascending: true }),
     ]);
 
-  // `credits_spent` and `profile_featured_gifts` arrive with migration 0022. Until it is
-  // applied, the public profile still works against the current production schema.
-  let sentRows: any[] = sentWithCostResult.data ?? [];
-  if (sentWithCostResult.error) {
-    const { data } = await supabase
-      .from("owned_gifts")
-      .select("id,owner_id,gift_id,received_at")
-      .eq("from_id", profileId)
-      .order("received_at", { ascending: false })
-      .limit(HISTORY_LIMIT);
-    sentRows = data ?? [];
-  }
-  let sentAggregateRows: any[] = sentAggregateWithCost.data ?? [];
-  if (sentAggregateWithCost.error) {
-    const { data } = await supabase
-      .from("owned_gifts")
-      .select("gift_id")
-      .eq("from_id", profileId)
-      .limit(10_000);
-    sentAggregateRows = data ?? [];
-  }
+  // Destaques chegam com a migration 0022. Até ela ser aplicada, o restante do
+  // perfil continua funcionando normalmente e a seção permanece vazia.
+  const sentRows: any[] = sentResult.data ?? [];
+  const sentAggregateRows: any[] = sentAggregateResult.data ?? [];
 
   const ownedRows = ownedResult.data ?? [];
   const receivedRows = receivedResult.data ?? [];
@@ -162,7 +145,7 @@ export async function getProfileShowcase(profileId: string): Promise<ProfileShow
       gift,
       actor: actors.get(row.owner_id),
       receivedAt: row.received_at,
-      creditsSpent: Number(row.credits_spent ?? gift.price),
+      creditsSpent: gift.price,
       direction: "sent",
     }];
   });
@@ -177,7 +160,7 @@ export async function getProfileShowcase(profileId: string): Promise<ProfileShow
 
   const creditsSent = sentAggregateRows.reduce((sum, row) => {
     const gift = catalogById.get(row.gift_id);
-    return sum + Number(row.credits_spent ?? gift?.price ?? 0);
+    return sum + Number(gift?.price ?? 0);
   }, 0);
   const activity = [...received, ...sent]
     .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime())

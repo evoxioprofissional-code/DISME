@@ -1,23 +1,5 @@
--- DisMe — destaques de presentes e custo histórico para o novo perfil
+-- DisMe — presentes em destaque no perfil
 -- Migration criada localmente. Não aplicada automaticamente.
-
-alter table public.owned_gifts
-  add column if not exists credits_spent integer check (credits_spent is null or credits_spent >= 0);
-
-update public.owned_gifts owned
-set credits_spent = gifts.price
-from public.gifts gifts
-where owned.gift_id = gifts.id
-  and owned.from_id is not null
-  and owned.credits_spent is null;
-
-create index if not exists owned_gifts_sender_idx
-  on public.owned_gifts (from_id, received_at desc)
-  where from_id is not null;
-
-revoke select on public.owned_gifts from anon, authenticated;
-grant select (id, owner_id, gift_id, from_id, serial, received_at, credits_spent)
-  on public.owned_gifts to anon, authenticated;
 
 create table public.profile_featured_gifts (
   profile_id uuid not null references public.profiles(id) on delete cascade,
@@ -75,63 +57,3 @@ end $$;
 
 revoke all on function public.set_profile_featured_gifts(text[]) from public;
 grant execute on function public.set_profile_featured_gifts(text[]) to authenticated;
-
--- Guarda o preço efetivamente pago. Alterações futuras de catálogo não reescrevem o histórico.
-create or replace function public.send_gift(target uuid, selected_gift text, gift_message text default null)
-returns uuid
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  caller uuid := auth.uid();
-  cost integer;
-  flex_gain integer;
-  max_supply integer;
-  current_minted integer;
-  gift_serial integer;
-  created_id uuid;
-begin
-  if caller is null or target is null or caller = target then raise exception 'invalid recipient'; end if;
-  select price, flex_value, supply, minted into cost, flex_gain, max_supply, current_minted
-    from gifts where id = selected_gift for update;
-  if not found then raise exception 'gift not found'; end if;
-  if max_supply is not null and current_minted >= max_supply then raise exception 'gift sold out'; end if;
-
-  update profiles set credits = credits - cost, flex = flex + flex_gain
-    where id = caller and credits >= cost;
-  if not found then raise exception 'insufficient credits'; end if;
-
-  gift_serial := case when max_supply is null then null else current_minted + 1 end;
-  insert into owned_gifts (owner_id, gift_id, from_id, serial, message, credits_spent)
-    values (target, selected_gift, caller, gift_serial, nullif(trim(gift_message), ''), cost)
-    returning id into created_id;
-  insert into notifications (profile_id, type, actor_id, gift_id)
-    values (target, 'gift', caller, selected_gift);
-  return created_id;
-end $$;
-
-grant execute on function public.send_gift(uuid, text, text) to authenticated;
-
--- collection_count representa tipos desbloqueados; totais de recebidos/enviados continuam
--- derivados dos registros individuais de owned_gifts no novo perfil.
-create or replace function public.on_owned_gift_insert()
-returns trigger language plpgsql security definer set search_path = public as $$
-begin
-  update public.profiles
-    set collection_count = (
-      select count(distinct gift_id)::integer from public.owned_gifts where owner_id = new.owner_id
-    )
-    where id = new.owner_id;
-  update public.gifts set minted = minted + 1 where id = new.gift_id and supply is not null;
-  if new.from_id is not null then
-    update public.profiles set gifts_received = gifts_received + 1 where id = new.owner_id;
-    update public.profiles set gifts_sent = gifts_sent + 1 where id = new.from_id;
-  end if;
-  return new;
-end $$;
-
-update public.profiles profile
-set gifts_received = (select count(*)::integer from public.owned_gifts where owner_id = profile.id and from_id is not null),
-    gifts_sent = (select count(*)::integer from public.owned_gifts where from_id = profile.id),
-    collection_count = (select count(distinct gift_id)::integer from public.owned_gifts where owner_id = profile.id);

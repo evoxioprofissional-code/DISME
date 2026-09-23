@@ -43,7 +43,7 @@ Essa combinação consumiria unidades limitadas (`eclipse` e `trono`) por causa 
 2. criar futuramente um gift não limitado de maior valor, com asset e decisão de catálogo;
 3. autorizar conscientemente o consumo das unidades limitadas e destinatários de fixture.
 
-Nunca preencher `credits_spent` com um valor diferente do preço efetivamente representado apenas para alcançar o total.
+Um mecanismo futuro de custo histórico nunca deve aceitar valores diferentes do preço efetivamente representado apenas para alcançar o total.
 
 ## Destaques
 
@@ -63,8 +63,8 @@ O banco valida que os três gifts pertencem à coleção do perfil.
 
 ## Tabelas afetadas
 
-- `profiles`: somente `flex`; os caches `gifts_received`, `gifts_sent` e `collection_count` são reconciliados pela migration 0022.
-- `owned_gifts`: 47 recebidos e 31 enviados, com `credits_spent` congelado nos envios.
+- `profiles`: `flex` e, caso o seed seja aprovado, reconciliação explícita dos caches `gifts_received`, `gifts_sent` e `collection_count` dentro da transação do seed.
+- `owned_gifts`: 47 recebidos e 31 enviados. Um mecanismo separado de custo histórico ainda precisa ser aprovado antes de representar os 86.400 créditos com exatidão.
 - `profile_featured_gifts`: 3 registros.
 - `gifts`: o trigger incrementa `minted` para gifts limitados; revisar antes de qualquer execução.
 - `feed_activities`: nenhuma inserção é necessária para o novo perfil, pois a atividade de presentes é derivada de `owned_gifts`.
@@ -76,12 +76,12 @@ O banco valida que os três gifts pertencem à coleção do perfil.
 - O seed de histórico não deve chamar `send_gift`, pois isso descontaria créditos atuais e concederia Flex pelo fluxo econômico real.
 - Inserções administrativas em `owned_gifts` representam importação histórica, não pagamentos.
 - Usar uma transação única e validar contagens antes do commit.
-- Validar após a operação: 47 recebidos, 31 enviados, soma de `credits_spent` 86.400, 8 gifts distintos recebidos, 3 destaques válidos e Flex 18.420.
+- Validar após a operação: 47 recebidos, 31 enviados, 8 gifts distintos recebidos, 3 destaques válidos e Flex 18.420. A meta de 86.400 créditos só deve ser validada depois da aprovação de um mecanismo separado de custo histórico.
 - Fazer rollback se qualquer validação falhar.
 
 ## Pré-condições para um script executável
 
-1. aplicar e revisar a migration 0022;
+1. aplicar e revisar a migration 0022 de destaques;
 2. decidir como tratar o consumo de gifts limitados;
 3. fornecer contas de fixture/autorizadas para remetentes e destinatários;
 4. aprovar explicitamente a importação histórica em produção;
